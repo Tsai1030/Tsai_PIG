@@ -23,7 +23,7 @@ export default function HimFavoritesPage() {
               <HeartIcon />
               <div>
                 <CardTitle>愛心收藏</CardTitle>
-                <CardDescription>查看公主的收藏清單</CardDescription>
+                <CardDescription>查看收藏清單</CardDescription>
               </div>
             </div>
             <Badge variant="secondary">唯讀</Badge>

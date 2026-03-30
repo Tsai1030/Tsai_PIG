@@ -28,14 +28,14 @@ const ROLES: {
   {
     role: "her",
     icon: CrownIcon,
-    label: "公主殿下",
+    label: "女士請進",
     subtitle: "美食規劃者",
     desc: "日曆讀寫 · 地圖探索 · 收藏管理 · AI 對話",
   },
   {
     role: "him",
     icon: ShieldIcon,
-    label: "王子大人",
+    label: "男士請進",
     subtitle: "美食執行者",
     desc: "日曆唯讀 · 收藏唯讀 · AI 對話",
   },

@@ -66,7 +66,7 @@
 | 後端框架 | FastAPI（Python 3.11+） | 高性能異步框架，自動 OpenAPI 文件 |
 | 後端 ORM | SQLAlchemy 2.0 + Alembic | OOP 模型定義，資料庫遷移管理 |
 | 資料庫 | SQLite（dev）/ PostgreSQL（prod） | 初期輕量，部署後無縫切換 |
-| 驗證/授權 | JWT（python-jose） | Token-based 角色識別（her / him） |
+| 驗證/授權 | JWT（python-jose）+ httpOnly Cookie | Cookie-based 角色識別（her / him），Token 不暴露給前端 JS |
 | AI Framework | LangGraph（StateGraph）+ LangChain Core | 顯式 State 管理，節點圖可視化，方便 debug |
 | AI 主對話模型 | **gpt-5-mini** | 糖糖人格互動、推薦創意、情境感知，需要較高品質 |
 | AI 工具型模型 | **gpt-5-nano** | 摘要、解析推薦名稱、分類、偏好萃取，結構化任務 nano 完全夠用 |
@@ -88,7 +88,7 @@
         │  REST API Calls（Axios）
         ▼
 [ FastAPI Server :8000 ]
-  ├── /api/auth        → JWT 登入、角色路由
+  ├── /api/auth        → JWT 登入（httpOnly Cookie）、角色路由
   ├── /api/calendar    → 三餐日曆 CRUD（her only write）
   ├── /api/favorites   → 愛心收藏 CRUD
   └── /api/agent       → AI 美食顧問（OpenAI Stream）
@@ -110,6 +110,7 @@
 | 🤴 他 | `/him/*` | `/api/him/*` | 日曆（唯讀）、收藏（唯讀）、AI 對話 |
 
 > ⚠️ **注意**：角色權限由後端 JWT Middleware 雙重驗證，前端路由隔離只是 UX 層防護，**真正的寫入保護在後端 Service 層**。
+> ⚠️ **安全設計**：JWT Token 以 `httpOnly` Cookie 傳遞，前端 JavaScript 無法讀取，防止 XSS 竊取 Token。前端僅存放 `role` / `nickname` 等非敏感 UI 顯示資訊。
 
 ### 2.4 環境變數設定（`.env`）
 
@@ -148,7 +149,7 @@ NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_maps_key_here   # ✅ 已設置於 .env
 
 | 模組 | 描述 | 路由前綴 | 角色限制 |
 |------|------|----------|----------|
-| `AuthModule` | JWT 登入、角色 Middleware、Token 刷新 | `/api/auth` | 全部 |
+| `AuthModule` | JWT 登入（httpOnly Cookie）、角色 Middleware、`/me` 端點 | `/api/auth` | 全部 |
 | `CalendarModule` | 三餐日曆 CRUD、月份導覽、日期視圖 | `/api/calendar` | 讀：全部 / 寫：her |
 | `MapModule` | Google Maps Embed、關鍵字搜尋 | 前端 only | her |
 | `FavoriteModule` | 愛心收藏、自動分類資料夾、新增 / 刪除、匯入日曆 | `/api/favorites` | 讀：全部 / 寫：her |
@@ -1412,14 +1413,14 @@ backend/
 │   ├── config.py                   # Settings (pydantic-settings BaseSettings)
 │   │                               # 含 LLM_MAIN / LLM_NANO 環境變數讀取
 │   ├── database.py                 # SQLAlchemy engine / SessionLocal / get_db
-│   └── security.py                 # JWT 產生、驗證、get_current_user
+│   └── security.py                 # JWT 產生、驗證、get_current_user（從 httpOnly Cookie 讀取）
 ├── models/
 │   ├── base.py                     # DeclarativeBase
 │   ├── user.py                     # User ORM Model
 │   ├── meal_plan.py                # MealPlan ORM Model
 │   └── favorite.py                 # Favorite ORM Model
 ├── schemas/
-│   ├── auth.py                     # LoginRequest / TokenResponse
+│   ├── auth.py                     # LoginRequest / LoginResponse（不含 token，token 走 Cookie）
 │   ├── calendar.py                 # MealPlanCreate / MealPlanResponse
 │   └── favorite.py                 # FavoriteCreate / FavoriteResponse
 ├── repositories/
@@ -1449,7 +1450,7 @@ backend/
 │   └── agent.py                    # POST /api/agent/chat（SSE）
 │                                   # GET  /api/agent/state（dev debug，回傳 State JSON）
 ├── middleware/
-│   └── auth_middleware.py          # JWT 驗證 + 角色 Guard
+│   └── auth_middleware.py          # JWT 驗證（從 Cookie 讀取）+ 角色 Guard
 └── tests/
     ├── conftest.py                  # pytest fixtures
     ├── test_auth.py
@@ -1500,7 +1501,7 @@ frontend/
 │       ├── RoleGuard.tsx           # 路由保護：角色驗證 HOC
 │       └── LoadingSpinner.tsx
 ├── hooks/
-│   ├── useAuth.ts                  # AuthContext + Token 管理
+│   ├── useAuth.ts                  # AuthContext（role/nickname 管理，token 由 httpOnly Cookie 自動帶上）
 │   ├── useCalendar.ts              # React Query Calendar hooks
 │   └── useFavorites.ts             # React Query Favorites hooks
 ├── lib/
@@ -1585,16 +1586,20 @@ services:
 
 #### S2 驗證系統 Auth
 - [ ] 後端：定義 `User` ORM Model（id / role / nickname / password_hash）
-- [ ] 後端：`AuthService.login()` 驗證密碼 + 產生 JWT
-- [ ] 後端：`get_current_user` Dependency（解析 Token → 取出 role）
+- [ ] 後端：`AuthService.login()` 驗證密碼 + 產生 JWT，以 **httpOnly Cookie** 回傳（不在 response body 暴露 token）
+- [ ] 後端：`POST /api/auth/login` Router — 登入成功設定 `Set-Cookie: token=xxx; HttpOnly; SameSite=Lax; Path=/`
+- [ ] 後端：`POST /api/auth/logout` Router — 清除 Cookie
+- [ ] 後端：`GET /api/auth/me` Router — 從 Cookie 解析 JWT，回傳 `{ role, nickname }`（供前端初始化用）
+- [ ] 後端：`get_current_user` Dependency（從 Cookie 讀取 JWT → 解析 role）
 - [ ] 後端：`RoleGuard` Middleware，封鎖未授權角色的寫入請求
-- [ ] 後端：`POST /api/auth/login` Router
 - [ ] 前端：Login 頁面（`/login`）選擇角色卡片
-- [ ] 前端：`useAuth` Hook + `AuthContext`（儲存 token + role）
+- [ ] 前端：`useAuth` Hook + `AuthContext`（透過 `/api/auth/me` 取得 role/nickname，不存 token）
+- [ ] 前端：Axios 設定 `withCredentials: true`，讓瀏覽器自動帶上 Cookie
 - [ ] 前端：`RoleGuard` 元件，未登入自動導向 `/login`
-- [ ] 驗證：her token 呼叫 PUT calendar → 200；him token → 403
+- [ ] 驗證：her Cookie 呼叫 PUT calendar → 200；him Cookie → 403
 
 > ⚠️ **注意**：JWT Secret 需為強隨機字串（min 32 chars），生產環境請用 secrets.token_hex(32)
+> ⚠️ **安全設計**：Token 以 httpOnly Cookie 傳遞，JavaScript 無法讀取，防止 XSS 攻擊竊取 Token
 
 ---
 
@@ -1739,12 +1744,13 @@ services:
 |----|----------|------|------|----------|
 | R1 | Google Maps JS SDK 需計費 API Key，Embed API 功能有限 | 🟡 中 | 搜尋功能受限 | 先用 Embed API + query 字串，功能足夠再升級 |
 | R2 | OpenAI API 費用：主對話 gpt-5-mini + 工具任務 gpt-5-nano | 🟡 中 | 費用累積 | 混用策略已大幅降低成本；主對話 max_tokens=600；Rate Limiting 20 次/小時；兩人使用費用極低 |
-| R3 | JWT 無 Refresh Token，需重新登入 | 🟡 中 | 體驗不佳 | JWT TTL 設為 7 天；後期加 Refresh Token |
+| R3 | JWT 無 Refresh Token，需重新登入 | 🟡 中 | 體驗不佳 | JWT TTL 設為 7 天；httpOnly Cookie 自動帶上；後期加 Refresh Token |
 | R4 | SQLite 不支援並發寫入 | 🟢 低 | 初期兩人使用影響極小 | 正式部署切換 PostgreSQL |
 | R5 | Next.js App Router + React Query 整合學習曲線 | 🟡 中 | 開發延遲 | 前期用 useState + fetch 替代，再逐步遷移 |
 | R6 | 手機 iOS Safe Area 未處理，內容被工具列遮住 | 🟢 低 | 下方內容遮擋 | `pb-[env(safe-area-inset-bottom)]` |
 | R7 | SSE 在某些反向代理下斷流 | 🟡 中 | AI 對話卡住 | 加 reconnect 邏輯；備案改輪詢 polling |
 | R8 | OPENAI_API_KEY 外洩（前端直接呼叫） | 🔴 高 | 費用盜用 | 所有 AI 呼叫必須走後端 proxy，Key 絕不出現在前端 |
+| R13 | XSS 攻擊竊取使用者 JWT Token | 🔴 高→🟢 已緩解 | 身分盜用 | JWT 以 httpOnly Cookie 傳遞，前端 JS 無法讀取；搭配 SameSite=Lax 防 CSRF |
 | R9 | SqliteSaver Checkpointer 檔案損毀，對話歷史消失 | 🟡 中 | 短期記憶遺失 | 定期備份 checkpoints.db；正式部署用 PostgresSaver |
 | R10 | LangGraph astream_events 串流行為差異，SSE 可能漏 token | 🟡 中 | 對話串流不完整 | 使用 `version="v2"` 並過濾 `on_chat_model_stream` 事件 |
 | R11 | classify_restaurant LLM 分類不一致（同類型建多個相似資料夾） | 🟡 中 | 資料夾雜亂 | `available_folders` 傳給 LLM 讓它優先歸入現有夾；可用 `reclassify_restaurant` 對話修正 |

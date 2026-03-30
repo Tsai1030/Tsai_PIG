@@ -5,16 +5,19 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface TokenResponse {
-  access_token: string;
-  token_type: string;
+export interface LoginResponse {
+  role: UserRole;
+  nickname: string;
+}
+
+export interface MeResponse {
   role: UserRole;
   nickname: string;
 }
 
 export interface AuthState {
-  token: string | null;
   role: UserRole | null;
   nickname: string | null;
   isLoggedIn: boolean;
+  isLoading: boolean;
 }

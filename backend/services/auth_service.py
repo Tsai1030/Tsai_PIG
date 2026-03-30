@@ -7,7 +7,16 @@ from fastapi import HTTPException, status
 from core.security import create_access_token, hash_password, verify_password
 from models.user import User
 from repositories.user_repository import UserRepository
-from schemas.auth import LoginRequest, TokenResponse
+from schemas.auth import LoginRequest
+
+
+class LoginResult:
+    """login() 回傳結果，包含 token（供 Router 設定 Cookie）和使用者資訊"""
+
+    def __init__(self, token: str, role: str, nickname: str):
+        self.token = token
+        self.role = role
+        self.nickname = nickname
 
 
 class AuthService:
@@ -15,7 +24,7 @@ class AuthService:
     def __init__(self, repo: UserRepository):
         self.repo = repo
 
-    def login(self, data: LoginRequest) -> TokenResponse:
+    def login(self, data: LoginRequest) -> LoginResult:
         user = self.repo.get_by_nickname(data.nickname)
         if not user or not verify_password(data.password, user.password_hash):
             raise HTTPException(
@@ -23,11 +32,7 @@ class AuthService:
                 detail="帳號或密碼錯誤",
             )
         token = create_access_token({"sub": user.id, "role": user.role})
-        return TokenResponse(
-            access_token=token,
-            role=user.role,
-            nickname=user.nickname,
-        )
+        return LoginResult(token=token, role=user.role, nickname=user.nickname)
 
     def seed_default_users(self) -> None:
         """建立預設使用者（開發用）：her / him"""

@@ -10,7 +10,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
-import type { AuthState, LoginRequest, TokenResponse, UserRole } from "@/types/auth";
+import type { AuthState, LoginRequest, LoginResponse, MeResponse } from "@/types/auth";
 
 interface AuthContextValue extends AuthState {
   login: (data: LoginRequest) => Promise<void>;
@@ -22,32 +22,40 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [state, setState] = useState<AuthState>({
-    token: null,
     role: null,
     nickname: null,
     isLoggedIn: false,
+    isLoading: true,
   });
 
-  // 初始化：從 localStorage 讀取
+  // 初始化：透過 /api/auth/me 確認登入狀態（Cookie 自動帶上）
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role") as UserRole | null;
-    const nickname = localStorage.getItem("nickname");
-    if (token && role) {
-      setState({ token, role, nickname, isLoggedIn: true });
-    }
+    api
+      .get<MeResponse>("/api/auth/me")
+      .then((res) => {
+        setState({
+          role: res.data.role,
+          nickname: res.data.nickname,
+          isLoggedIn: true,
+          isLoading: false,
+        });
+      })
+      .catch(() => {
+        setState({
+          role: null,
+          nickname: null,
+          isLoggedIn: false,
+          isLoading: false,
+        });
+      });
   }, []);
 
   const login = useCallback(
     async (data: LoginRequest) => {
-      const res = await api.post<TokenResponse>("/api/auth/login", data);
-      const { access_token, role, nickname } = res.data;
+      const res = await api.post<LoginResponse>("/api/auth/login", data);
+      const { role, nickname } = res.data;
 
-      localStorage.setItem("token", access_token);
-      localStorage.setItem("role", role);
-      localStorage.setItem("nickname", nickname);
-
-      setState({ token: access_token, role, nickname, isLoggedIn: true });
+      setState({ role, nickname, isLoggedIn: true, isLoading: false });
 
       // 根據角色導向不同首頁
       router.push(role === "her" ? "/her/calendar" : "/him/calendar");
@@ -55,11 +63,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [router]
   );
 
-  const logout = useCallback(() => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("nickname");
-    setState({ token: null, role: null, nickname: null, isLoggedIn: false });
+  const logout = useCallback(async () => {
+    await api.post("/api/auth/logout").catch(() => {});
+    setState({ role: null, nickname: null, isLoggedIn: false, isLoading: false });
     router.push("/login");
   }, [router]);
 

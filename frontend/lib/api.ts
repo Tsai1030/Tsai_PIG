@@ -5,27 +5,18 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true, // 讓瀏覽器自動帶上 httpOnly Cookie
 });
 
-// Request interceptor — 自動附加 JWT Token
-api.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
-  return config;
-});
-
-// Response interceptor — 401 自動登出
+// Response interceptor — 401 導向登入頁
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("token");
-      localStorage.removeItem("role");
-      localStorage.removeItem("nickname");
+    if (
+      error.response?.status === 401 &&
+      typeof window !== "undefined" &&
+      !window.location.pathname.startsWith("/login")
+    ) {
       window.location.href = "/login";
     }
     return Promise.reject(error);

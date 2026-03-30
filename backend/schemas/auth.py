@@ -10,8 +10,13 @@ class LoginRequest(BaseModel):
     password: str
 
 
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
+class LoginResponse(BaseModel):
+    """登入成功回應（token 不在 body，透過 httpOnly Cookie 傳遞）"""
+    role: str
+    nickname: str
+
+
+class MeResponse(BaseModel):
+    """/api/auth/me 回應"""
     role: str
     nickname: str
