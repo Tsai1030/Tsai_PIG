@@ -2,7 +2,8 @@
 Favorite Repository — 愛心收藏資料存取
 """
 
-from typing import List
+from collections import defaultdict
+from typing import Dict, List
 
 from sqlalchemy.orm import Session
 
@@ -22,6 +23,18 @@ class FavoriteRepository(BaseRepository[Favorite]):
             .all()
         )
 
+    def get_grouped_by_category(self) -> Dict[str, List[Favorite]]:
+        """回傳 {category: [Favorite]} 分組結構，依 created_at desc 排序。"""
+        favorites = self.get_all()
+        grouped: Dict[str, List[Favorite]] = defaultdict(list)
+        for fav in favorites:
+            grouped[fav.category].append(fav)
+        return dict(grouped)
+
+    def get_categories(self) -> List[str]:
+        rows = self.db.query(Favorite.category).distinct().all()
+        return [row[0] for row in rows]
+
     def get_by_user(self, user_id: str) -> List[Favorite]:
         return self.db.query(Favorite).filter(Favorite.user_id == user_id).all()
 
@@ -32,11 +45,3 @@ class FavoriteRepository(BaseRepository[Favorite]):
             .all()
         )
 
-    def get_categories(self, user_id: str) -> List[str]:
-        rows = (
-            self.db.query(Favorite.category)
-            .filter(Favorite.user_id == user_id)
-            .distinct()
-            .all()
-        )
-        return [row[0] for row in rows]

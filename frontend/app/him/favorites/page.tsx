@@ -1,48 +1,40 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 import { HeartIcon } from "lucide-react";
 
-const FOLDERS = ["🗂 全部", "📁 火鍋", "📁 燒烤", "📁 日式", "📁 甜點"];
+import { AddToCalendarModal } from "@/components/favorites/AddToCalendarModal";
+import { FolderList } from "@/components/favorites/FolderList";
+import { useFavoritesGrouped } from "@/hooks/useFavorites";
+import { Favorite } from "@/types/favorite";
 
 export default function HimFavoritesPage() {
+  const { data: grouped = {}, isLoading } = useFavoritesGrouped();
+  const [calendarFav, setCalendarFav] = useState<Favorite | null>(null);
+
+  const total = Object.values(grouped).reduce((sum, arr) => sum + arr.length, 0);
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <HeartIcon />
-              <div>
-                <CardTitle>愛心收藏</CardTitle>
-                <CardDescription>查看收藏清單</CardDescription>
-              </div>
-            </div>
-            <Badge variant="secondary">唯讀</Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-2">
-            {FOLDERS.map((folder) => (
-              <div
-                key={folder}
-                className="flex items-center justify-between rounded-lg border p-3"
-              >
-                <span className="text-sm">{folder}</span>
-                <Skeleton className="h-4 w-8" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* 頁首 */}
+      <div className="flex items-center gap-2">
+        <HeartIcon className="size-5 text-rose-500 fill-rose-500" />
+        <div>
+          <h1 className="text-base font-semibold">愛心收藏</h1>
+          <p className="text-xs text-muted-foreground">共 {total} 間餐廳</p>
+        </div>
+      </div>
+
+      {/* 資料夾列表（唯讀） */}
+      <FolderList
+        grouped={grouped}
+        isLoading={isLoading}
+        canDelete={false}
+        onAddToCalendar={setCalendarFav}
+      />
+
+      {/* 一鍵加入日曆 Modal（him 也可以把收藏加進日曆） */}
+      <AddToCalendarModal fav={calendarFav} onClose={() => setCalendarFav(null)} />
     </div>
   );
 }

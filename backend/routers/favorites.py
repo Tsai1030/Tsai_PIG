@@ -24,8 +24,17 @@ async def get_favorites(
     current_user: dict = Depends(get_current_user),
     service: FavoriteService = Depends(get_favorite_service),
 ):
-    """取得所有收藏（全部角色可讀）"""
+    """取得所有收藏（flat list，供地圖側邊欄使用）"""
     return service.get_all()
+
+
+@router.get("/grouped", response_model=dict[str, list[FavoriteResponse]])
+async def get_favorites_grouped(
+    current_user: dict = Depends(get_current_user),
+    service: FavoriteService = Depends(get_favorite_service),
+):
+    """取得分組後的收藏（{category: [Favorite]}，供收藏資料夾頁使用）"""
+    return service.get_grouped()
 
 
 @router.post("", response_model=FavoriteResponse, status_code=201)
@@ -34,8 +43,8 @@ async def create_favorite(
     current_user: dict = Depends(require_role("her")),
     service: FavoriteService = Depends(get_favorite_service),
 ):
-    """新增收藏餐廳（僅 her 可寫入）"""
-    return service.create(current_user["user_id"], data)
+    """新增收藏餐廳，後端自動呼叫 classify_restaurant 填入分類（僅 her 可寫入）"""
+    return await service.create(current_user["user_id"], data)
 
 
 @router.delete("/{favorite_id}", status_code=204)

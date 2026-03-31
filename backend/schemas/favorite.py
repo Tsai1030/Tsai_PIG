@@ -3,7 +3,7 @@ Favorite Pydantic Schemas — 收藏餐廳請求/回應格式
 """
 
 import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -22,4 +22,5 @@ class FavoriteResponse(BaseModel):
     address: str
     maps_url: Optional[str]
     category: str
+    category_tags: Optional[list[Any]]
     created_at: datetime.datetime

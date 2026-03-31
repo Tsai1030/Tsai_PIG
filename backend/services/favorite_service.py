@@ -2,13 +2,14 @@
 FavoriteService — 收藏餐廳業務邏輯
 """
 
-from typing import List
+from typing import Dict, List
 
 from fastapi import HTTPException, status
 
 from models.favorite import Favorite
 from repositories.favorite_repository import FavoriteRepository
 from schemas.favorite import FavoriteCreate
+from services.agent.tools import classify_restaurant
 
 
 class FavoriteService:
@@ -19,12 +20,23 @@ class FavoriteService:
     def get_all(self) -> List[Favorite]:
         return self.repo.get_all()
 
-    def create(self, user_id: str, data: FavoriteCreate) -> Favorite:
+    def get_grouped(self) -> Dict[str, List[Favorite]]:
+        return self.repo.get_grouped_by_category()
+
+    async def create(self, user_id: str, data: FavoriteCreate) -> Favorite:
+        available_folders = self.repo.get_categories()
+        classification = await classify_restaurant(
+            restaurant_name=data.restaurant_name,
+            address=data.address,
+            available_folders=available_folders,
+        )
         fav = Favorite(
             user_id=user_id,
             restaurant_name=data.restaurant_name,
             address=data.address,
             maps_url=data.maps_url,
+            category=classification["category"],
+            category_tags=classification["category_tags"],
         )
         return self.repo.create(fav)
 

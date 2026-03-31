@@ -1,13 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import api from "@/lib/api";
-import { Favorite, FavoriteCreate } from "@/types/favorite";
+import { Favorite, FavoriteCreate, FavoritesGrouped } from "@/types/favorite";
 
 export function useFavorites() {
   return useQuery({
     queryKey: ["favorites"],
     queryFn: async () => {
       const { data } = await api.get<Favorite[]>("/api/favorites");
+      return data;
+    },
+  });
+}
+
+export function useFavoritesGrouped() {
+  return useQuery({
+    queryKey: ["favorites", "grouped"],
+    queryFn: async () => {
+      const { data } = await api.get<FavoritesGrouped>("/api/favorites/grouped");
       return data;
     },
   });

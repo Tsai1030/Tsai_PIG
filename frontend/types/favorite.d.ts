@@ -4,6 +4,7 @@ export interface Favorite {
   address: string;
   maps_url: string | null;
   category: string;
+  category_tags: string[] | null;
   created_at: string;
 }
 
@@ -12,3 +13,6 @@ export interface FavoriteCreate {
   address: string;
   maps_url?: string;
 }
+
+/** {category: Favorite[]} — GET /api/favorites/grouped */
+export type FavoritesGrouped = Record<string, Favorite[]>;

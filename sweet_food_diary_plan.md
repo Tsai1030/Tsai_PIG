@@ -1650,20 +1650,25 @@ services:
 ---
 
 #### S6 收藏模組（資料夾分類）
-- [ ] 後端：`favorites` 表新增 `category` / `category_tags` 欄位，Alembic migration
-- [ ] 後端：`FavoriteRepository.get_grouped_by_category()` — 回傳 `{category: [Favorite]}` 分組結構
-- [ ] 後端：`FavoriteService` 含角色權限（her only 寫入）
-- [ ] 後端：`GET /api/favorites` — 回傳分組後的資料夾結構
-- [ ] 後端：`POST /api/favorites` — 儲存 + 直接 invoke `classify_restaurant` tool → 自動填入 `category`
-- [ ] 後端：`DELETE /api/favorites/{id}`（her only）
-- [ ] 前端：`useFavorites` Hook（React Query，取分組資料）
-- [ ] 前端：`FolderList.tsx` — 資料夾列表（全部 / 火鍋 / 燒烤...）
-- [ ] 前端：`FolderItem.tsx` — 可展開 / 收合的資料夾，顯示店家卡片
-- [ ] 前端：`FavoriteCard.tsx` — 單筆收藏（店名 + 地址 + ❤️ 刪除按鈕）
-- [ ] 前端：「全部」永遠置頂；「其他」永遠置底；空資料夾自動隱藏
-- [ ] 前端：收藏 → 一鍵填入日曆（點店家卡片 → 選日期 + 餐別 Modal）
+- [x] 後端：`favorites` 表新增 `category_tags` 欄位（JSON 陣列），Alembic migration `f01eefa8f00b`
+- [x] 後端：`FavoriteRepository.get_grouped_by_category()` — 回傳 `{category: [Favorite]}` 分組結構
+- [x] 後端：`FavoriteService` 含角色權限（her only 寫入）
+- [x] 後端：`GET /api/favorites` — 保留 flat list（地圖側邊欄使用）；新增 `GET /api/favorites/grouped` 供收藏頁使用
+- [x] 後端：`POST /api/favorites` — 儲存 + invoke `classify_restaurant` → 自動填入 `category` + `category_tags`
+- [x] 後端：`DELETE /api/favorites/{id}`（her only）
+- [x] 前端：`useFavorites` / `useFavoritesGrouped` Hook（React Query）
+- [x] 前端：`FolderList.tsx` — 資料夾列表（全部 / 火鍋 / 燒烤...）
+- [x] 前端：`FolderItem.tsx` — 可展開 / 收合資料夾，CSS Grid height animation
+- [x] 前端：`FavoriteCard.tsx` — 單筆收藏（店名 + 地址 + 標籤 + 加入日曆 / 刪除按鈕）
+- [x] 前端：「全部」永遠置頂；「其他」永遠置底；空資料夾自動隱藏
+- [x] 前端：收藏 → 一鍵填入日曆（`AddToCalendarModal`：選日期 + 餐別）
 
 > ⚠️ **注意**：`category` 由後端 tool 決定，前端不做分類邏輯，只做分組顯示
+
+> 📌 **S6 pre-build（提前自 S7 實作）**：  
+> `services/agent/tools.py` 內的 `classify_restaurant` 在 S6 以普通 async function 實作（使用 `langchain-openai ChatOpenAI`），
+> 供 `FavoriteService.create()` 直接 invoke。  
+> **S7 升級方式**：加上 `@tool` decorator + Pydantic `ClassifyInput` Schema，bind 進 `StateGraph`，並加入 `reclassify_restaurant`。
 
 ---
 
