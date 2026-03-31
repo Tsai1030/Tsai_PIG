@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import {
   Card,
   CardContent,
@@ -7,64 +9,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CalendarGrid } from "@/components/calendar/CalendarGrid";
+import { DayDetailDrawer } from "@/components/calendar/DayDetailDrawer";
+import { useCalendar } from "@/hooks/useCalendar";
 
 const TODAY = new Date();
-const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
-
-function CalendarPreview() {
-  const year = TODAY.getFullYear();
-  const month = TODAY.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const todayDate = TODAY.getDate();
-
-  const cells: (number | null)[] = [];
-  for (let i = 0; i < firstDay; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-center gap-2 text-sm font-medium">
-        <CalendarIcon />
-        <span>
-          {year} 年 {month + 1} 月
-        </span>
-      </div>
-
-      <div className="grid grid-cols-7 text-center text-xs text-muted-foreground">
-        {WEEKDAYS.map((d) => (
-          <div key={d} className="py-1">{d}</div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7 gap-1">
-        {cells.map((day, i) => (
-          <div
-            key={i}
-            className={
-              day === todayDate
-                ? "flex flex-col items-center rounded-lg bg-primary/10 py-1 text-xs font-medium text-primary"
-                : "flex flex-col items-center rounded-lg py-1 text-xs text-muted-foreground"
-            }
-          >
-            {day ?? ""}
-            {day === todayDate && (
-              <div className="mt-0.5 flex gap-px">
-                <span className="block size-1 rounded-full bg-primary" />
-                <span className="block size-1 rounded-full bg-accent-foreground/40" />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+const MEAL_LABELS = { breakfast: "🌅 早餐", lunch: "☀️ 午餐", dinner: "🌙 晚餐" } as const;
 
 export default function HimCalendarPage() {
+  const [year, setYear] = useState(TODAY.getFullYear());
+  const [month, setMonth] = useState(TODAY.getMonth() + 1);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  const { data: mealsMap = {}, isLoading } = useCalendar(year, month);
+
+  const todayStr = `${TODAY.getFullYear()}-${String(TODAY.getMonth() + 1).padStart(2, "0")}-${String(TODAY.getDate()).padStart(2, "0")}`;
+  const todayMeals = mealsMap[todayStr] ?? {};
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">
       <Card>
@@ -78,26 +41,50 @@ export default function HimCalendarPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <CalendarPreview />
+          {isLoading ? (
+            <Skeleton className="h-48 w-full" />
+          ) : (
+            <CalendarGrid
+              mealsMap={mealsMap}
+              onDayClick={setSelectedDate}
+              onMonthChange={(y, m) => { setYear(y); setMonth(m); }}
+            />
+          )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>今日三餐</CardTitle>
-          <CardDescription>等待公主殿下規劃</CardDescription>
+          <CardDescription>點選日期可查看詳情</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-3">
-            {["🌅 早餐", "☀️ 午餐", "🌙 晚餐"].map((meal) => (
-              <div key={meal} className="flex items-center gap-3">
-                <span className="text-sm">{meal}</span>
-                <Skeleton className="h-4 flex-1" />
-              </div>
-            ))}
+            {(["breakfast", "lunch", "dinner"] as const).map((type) => {
+              const meal = todayMeals[type];
+              return (
+                <div key={type} className="flex items-center gap-3">
+                  <span className="text-sm shrink-0">{MEAL_LABELS[type]}</span>
+                  {meal ? (
+                    <span className="text-sm font-medium truncate">{meal.restaurant_name}</span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">等待公主規劃</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
+
+      {selectedDate && (
+        <DayDetailDrawer
+          open={!!selectedDate}
+          onClose={() => setSelectedDate(null)}
+          dateStr={selectedDate}
+          mealsMap={mealsMap}
+        />
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 MealPlan Repository — 三餐日曆資料存取
 """
 
+import datetime
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
@@ -33,3 +34,30 @@ class MealPlanRepository(BaseRepository[MealPlan]):
             .order_by(MealPlan.plan_date, MealPlan.meal_type)
             .all()
         )
+
+    def upsert(
+        self,
+        user_id: str,
+        plan_date: datetime.date,
+        meal_type: str,
+        restaurant_name: str,
+        address: str,
+        note: Optional[str],
+    ) -> MealPlan:
+        """以 (plan_date, meal_type) 為唯一鍵 Upsert；存在則更新，否則新建。"""
+        existing = self.get_by_date_and_meal_type(str(plan_date), meal_type)
+        if existing:
+            existing.user_id = user_id
+            existing.restaurant_name = restaurant_name
+            existing.address = address
+            existing.note = note
+            return self.update(existing)
+        meal_plan = MealPlan(
+            user_id=user_id,
+            plan_date=plan_date,
+            meal_type=meal_type,
+            restaurant_name=restaurant_name,
+            address=address,
+            note=note,
+        )
+        return self.create(meal_plan)
