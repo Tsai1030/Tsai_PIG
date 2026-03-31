@@ -48,6 +48,9 @@ coverage/
 *.db
 *.db-journal
 
+# Claude Code (local settings, not project config)
+.claude/settings.local.json
+
 # Misc
 *.log
 *.tsbuildinfo
