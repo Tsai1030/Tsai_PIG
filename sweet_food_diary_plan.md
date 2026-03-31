@@ -1618,19 +1618,23 @@ services:
 ### Phase 2 — 核心功能模組（S4–S6）
 
 #### S4 日曆模組 ⭐ 核心功能
-- [ ] 後端：`MealPlanRepository.get_by_month()` / `upsert()` / `delete()`
-- [ ] 後端：`CalendarService` 含角色權限判斷
-- [ ] 後端：`GET /api/calendar?year=&month=`（全部可讀）
-- [ ] 後端：`PUT /api/calendar`（her only，Upsert）
-- [ ] 後端：`DELETE /api/calendar/{id}`（her only）
-- [ ] 前端：`useCalendar` Hook（React Query）
-- [ ] 前端：`CalendarGrid.tsx`（月份導覽 + 7×6 格渲染）
-- [ ] 前端：`DayCell.tsx`（顯示三餐 badge，不同顏色區分）
-- [ ] 前端：`MealEditModal.tsx`（her only，早/中/晚三欄輸入）
-- [ ] 前端：Him 日曆唯讀視圖（點選 → 顯示餐廳資訊 Drawer）
+- [x] 後端：`MealPlanRepository.get_by_month()` / `upsert()` / `delete()`
+- [x] 後端：`CalendarService` 含角色權限判斷
+- [x] 後端：`GET /api/calendar?year=&month=`（全部可讀）
+- [x] 後端：`PUT /api/calendar`（her only，Upsert）
+- [x] 後端：`DELETE /api/calendar/{id}`（her only）
+- [x] 前端：`useCalendar` / `useUpsertMealPlan` / `useDeleteMealPlan` Hook（React Query v5）
+- [x] 前端：`CalendarGrid.tsx`（月份導覽 + 7×6 格渲染，左右箭頭切換月份）
+- [x] 前端：`DayCell.tsx`（三個彩色圓點，早餐琥珀 / 午餐翠綠 / 晚餐紫色）
+- [x] 前端：`MealEditModal.tsx`（her only，兩步驟流程）
+  - Step 1：橫向三張彩色卡片（早/中/晚），已規劃顯示餐廳名稱，未規劃顯示「未規劃」
+  - Step 2：點擊餐別後進入填寫畫面（餐廳名稱、地址、備註），含返回鍵 + 刪除 + 儲存
+- [x] 前端：`DayDetailDrawer.tsx`（him only，bottom sheet 唯讀顯示當日三餐餐廳資訊）
+- [x] 前端：Next.js rewrites proxy（`/api/*` → `http://localhost:8000/api/*`），解決 Codespace Cookie 跨域問題
 - [ ] RWD：手機螢幕日期格縮小，badge 顯示圖示即可
 
-> ⚠️ **注意**：Upsert 邏輯要以 `(plan_date, meal_type)` 為唯一鍵，避免重複
+> ⚠️ **注意**：Upsert 邏輯以 `(plan_date, meal_type)` 為唯一鍵，避免重複  
+> ⚠️ **注意**：後端 Cookie 設定為 `samesite="lax"`；跨域需改 `samesite="none" + secure=True`（目前以 Next.js proxy 繞過）
 
 ---
 
