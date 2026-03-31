@@ -11,9 +11,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from core.database import SessionLocal, engine
 from models.base import Base
+from models.favorite import Favorite  # noqa: F401 — 確保 ORM Model 被載入
 from models.user import User  # noqa: F401 — 確保 ORM Model 被載入
 from repositories.user_repository import UserRepository
-from routers import auth, calendar
+from routers import auth, calendar, favorites
 from services.auth_service import AuthService
 
 
@@ -59,5 +60,5 @@ async def health_check():
 # ── Router 掛載 ──────────────────────────────────────────
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(calendar.router, prefix="/api/calendar", tags=["Calendar"])
-# app.include_router(favorites.router, prefix="/api/favorites", tags=["Favorites"])
+app.include_router(favorites.router, prefix="/api/favorites", tags=["Favorites"])
 # app.include_router(agent.router, prefix="/api/agent", tags=["Agent"])

@@ -15,6 +15,13 @@ class FavoriteRepository(BaseRepository[Favorite]):
     def __init__(self, db: Session):
         super().__init__(Favorite, db)
 
+    def get_all(self) -> List[Favorite]:
+        return (
+            self.db.query(Favorite)
+            .order_by(Favorite.created_at.desc())
+            .all()
+        )
+
     def get_by_user(self, user_id: str) -> List[Favorite]:
         return self.db.query(Favorite).filter(Favorite.user_id == user_id).all()
 
