@@ -54,6 +54,7 @@ async def chat(
     thread_id = body.thread_id or str(uuid.uuid4())
     _check_rate_limit(thread_id)
     user_role = current_user["role"]
+    user_id = current_user["user_id"]
 
     async def event_stream():
         yield f"data: {json.dumps({'thread_id': thread_id})}\n\n"
@@ -61,6 +62,7 @@ async def chat(
             thread_id=thread_id,
             user_input=body.message,
             user_role=user_role,
+            user_id=user_id,
         ):
             yield f"data: {json.dumps({'content': chunk})}\n\n"
         yield "data: [DONE]\n\n"

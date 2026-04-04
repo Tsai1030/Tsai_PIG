@@ -8,7 +8,7 @@ from typing import Any, AsyncGenerator
 from langchain_core.messages import AIMessage, SystemMessage
 
 from .agent.graph import build_graph
-from .agent.store import get_checkpointer, memory_store
+from .agent.store import get_checkpointer, memory_store, reset_thread
 
 logger = logging.getLogger(__name__)
 
@@ -60,19 +60,34 @@ class AgentService:
         thread_id: str,
         user_input: str,
         user_role: str,
+        user_id: str = "",
+    ) -> AsyncGenerator[str, None]:
+        async for chunk in self._do_stream(thread_id, user_input, user_role, user_id, is_retry=False):
+            yield chunk
+
+    async def _do_stream(
+        self,
+        thread_id: str,
+        user_input: str,
+        user_role: str,
+        user_id: str,
+        is_retry: bool,
     ) -> AsyncGenerator[str, None]:
         graph = await _get_graph()
-        config = {"configurable": {"thread_id": thread_id}}
-        input_state = {"user_input": user_input, "user_role": user_role}
+        config = {
+            "configurable": {
+                "thread_id": thread_id,
+                "user_id": user_id,
+                "user_role": user_role,
+            }
+        }
+        input_state = {"user_input": user_input, "user_role": user_role, "user_id": user_id}
         emitted_text = False
         fallback_text = ""
+        checkpoint_error = False
 
         try:
-            async for event in graph.astream_events(
-                input_state,
-                config=config,
-                version="v2",
-            ):
+            async for event in graph.astream_events(input_state, config=config, version="v2"):
                 etype = event.get("event", "")
                 metadata = event.get("metadata", {})
                 node_name = metadata.get("langgraph_node") if isinstance(metadata, dict) else None
@@ -98,11 +113,26 @@ class AgentService:
                         fallback_text = end_text
 
         except Exception as exc:
-            logger.error("astream_events error (thread=%s): %s: %s", thread_id, type(exc).__name__, exc)
-            if fallback_text:
-                logger.info("using fallback_text captured before exception")
-            elif emitted_text:
-                return
+            err_str = str(exc)
+            if "Got unknown type" in err_str:
+                checkpoint_error = True
+                logger.warning(
+                    "Corrupted checkpoint detected thread=%s, clearing and retrying (is_retry=%s)",
+                    thread_id, is_retry,
+                )
+            else:
+                logger.error("astream_events error (thread=%s): %s: %s", thread_id, type(exc).__name__, exc)
+
+        # Auto-recover: clear corrupted checkpoint and retry once
+        if checkpoint_error and not is_retry:
+            await reset_thread(thread_id)
+            async for chunk in self._do_stream(thread_id, user_input, user_role, user_id, is_retry=True):
+                yield chunk
+            return
+
+        if checkpoint_error and is_retry:
+            yield "抱歉，對話記憶讀取失敗，已自動重置，請重新傳送您的訊息。"
+            return
 
         if not emitted_text and fallback_text:
             yield fallback_text
@@ -111,31 +141,7 @@ class AgentService:
         if emitted_text:
             return
 
-        try:
-            snapshot = await graph.aget_state(config)
-            values = snapshot.values if snapshot else {}
-            messages = values.get("messages", []) if isinstance(values, dict) else []
-            for msg in reversed(messages):
-                if not isinstance(msg, AIMessage):
-                    continue
-                state_text = _extract_text(msg.content).strip()
-                logger.info(
-                    "agent_state_fallback role=%s thread=%s has_text=%s",
-                    user_role,
-                    thread_id,
-                    bool(state_text),
-                )
-                if state_text:
-                    yield state_text
-                    return
-        except Exception as exc:
-            logger.warning("stream_chat state fallback failed: %s", exc)
-
-        logger.warning(
-            "stream_chat produced no visible assistant text. role=%s thread=%s",
-            user_role,
-            thread_id,
-        )
+        logger.warning("stream_chat produced no visible text. role=%s thread=%s", user_role, thread_id)
         yield "抱歉，我剛才沒有成功回應，請再說一次。"
 
     async def get_state(self, thread_id: str) -> dict | None:

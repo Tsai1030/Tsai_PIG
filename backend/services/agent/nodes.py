@@ -25,7 +25,7 @@ from core.config import settings
 
 from .prompts import build_system_prompt
 from .state import AgentState
-from .tools import classify_restaurant, reclassify_restaurant, web_search
+from .tools import add_to_calendar, classify_restaurant, reclassify_restaurant, save_favorite, web_search
 
 logger = logging.getLogger(__name__)
 
@@ -42,11 +42,15 @@ llm_nano = ChatOpenAI(
     max_completion_tokens=1000,
 )
 
-# LLM 綁定三個工具
-llm_with_tools = llm.bind_tools([classify_restaurant, reclassify_restaurant, web_search])
+# her 可用所有工具（含日曆）；him 不含 add_to_calendar
+_TOOLS_HER = [classify_restaurant, reclassify_restaurant, web_search, save_favorite, add_to_calendar]
+_TOOLS_HIM = [classify_restaurant, reclassify_restaurant, web_search, save_favorite]
+
+llm_with_tools_her = llm.bind_tools(_TOOLS_HER)
+llm_with_tools_him = llm.bind_tools(_TOOLS_HIM)
 
 COMPACT_EVERY = 10
-KEEP_RECENT = 4
+KEEP_RECENT = 8
 REMINDER_AT = 30
 
 
@@ -95,21 +99,32 @@ def session_start_node(state: AgentState, store: BaseStore) -> dict:
 
 
 def preprocess_node(state: AgentState) -> dict:
-    """turn+1、注入 summary、30 輪提醒 flag、封裝 HumanMessage。"""
+    """turn+1、注入 summary（更新 SystemMessage 而非新增）、30 輪提醒 flag。"""
     new_turn = state["turn_count"] + 1
     needs_remind = new_turn >= REMINDER_AT
 
-    extra = []
-    if state.get("summary"):
-        extra.append(
-            SystemMessage(
-                content=f"【對話摘要 - 之前聊過的內容】\n{state['summary']}"
-            )
+    msgs = state["messages"]
+    updates: list = []
+
+    summary = state.get("summary", "")
+    if summary:
+        # 找到既有的 summary SystemMessage，更新它；沒有就新增一條
+        summary_content = f"【對話摘要 - 之前聊過的內容】\n{summary}"
+        existing_summary_msg = next(
+            (m for m in msgs if isinstance(m, SystemMessage) and m.content.startswith("【對話摘要")),
+            None,
         )
-    extra.append(HumanMessage(content=state["user_input"]))
+        if existing_summary_msg:
+            # 刪除舊的，加入更新後的
+            updates.append(RemoveMessage(id=existing_summary_msg.id))
+            updates.append(SystemMessage(content=summary_content))
+        else:
+            updates.append(SystemMessage(content=summary_content))
+
+    updates.append(HumanMessage(content=state["user_input"]))
 
     return {
-        "messages": extra,
+        "messages": updates,
         "turn_count": new_turn,
         "needs_reminder": needs_remind,
     }
@@ -119,8 +134,9 @@ def preprocess_node(state: AgentState) -> dict:
 
 
 async def llm_node(state: AgentState) -> dict:
-    """LLM 節點（含兩個工具呼叫能力）。"""
-    response = await llm_with_tools.ainvoke(state["messages"])
+    """LLM 節點：依 user_role 使用對應工具集。"""
+    bound = llm_with_tools_her if state.get("user_role") == "her" else llm_with_tools_him
+    response = await bound.ainvoke(state["messages"])
     return {"messages": [response]}
 
 

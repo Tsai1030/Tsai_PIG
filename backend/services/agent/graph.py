@@ -16,9 +16,9 @@ from .nodes import (
     write_preferences_node,
 )
 from .state import AgentState
-from .tools import classify_restaurant, reclassify_restaurant, web_search
+from .tools import add_to_calendar, classify_restaurant, reclassify_restaurant, save_favorite, web_search
 
-tool_node = ToolNode([classify_restaurant, reclassify_restaurant, web_search])
+tool_node = ToolNode([classify_restaurant, reclassify_restaurant, web_search, save_favorite, add_to_calendar])
 
 
 def should_compact(state: AgentState) -> str:

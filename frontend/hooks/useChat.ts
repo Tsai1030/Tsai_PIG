@@ -1,7 +1,13 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import {
+  getSessions,
+  loadMessages,
+  saveMessages,
+  upsertSession,
+} from "@/lib/chatHistory";
 import type { ChatMessage } from "@/types/chat";
 
 type StreamPayload = {
@@ -33,11 +39,37 @@ function extractContentText(content: unknown): string {
   return "";
 }
 
-export function useChat() {
+export function useChat(role: string, onSessionsChanged: () => void) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
-  const threadIdRef = useRef<string | null>(null);
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+
+  // Refs for values needed inside async callbacks
+  const activeThreadIdRef = useRef<string | null>(null);
+  const messagesRef = useRef<ChatMessage[]>([]);
   const abortRef = useRef<AbortController | null>(null);
+
+  const switchThread = useCallback(
+    (threadId: string) => {
+      abortRef.current?.abort();
+      const msgs = loadMessages(threadId);
+      activeThreadIdRef.current = threadId;
+      messagesRef.current = msgs;
+      setActiveThreadId(threadId);
+      setMessages(msgs);
+      setIsStreaming(false);
+    },
+    []
+  );
+
+  const newThread = useCallback(() => {
+    abortRef.current?.abort();
+    activeThreadIdRef.current = null;
+    messagesRef.current = [];
+    setActiveThreadId(null);
+    setMessages([]);
+    setIsStreaming(false);
+  }, []);
 
   const sendMessage = useCallback(
     async (content: string) => {
@@ -48,20 +80,20 @@ export function useChat() {
         role: "user",
         content,
       };
-
       const assistantMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
         content: "",
       };
 
-      setMessages((prev) => [...prev, userMsg, assistantMsg]);
+      const withNew = [...messagesRef.current, userMsg, assistantMsg];
+      messagesRef.current = withNew;
+      setMessages(withNew);
       setIsStreaming(true);
 
       const abortController = new AbortController();
       abortRef.current = abortController;
-      let hasAssistantText = false;
-      let reachedDone = false;
+      let hasText = false;
 
       try {
         const res = await fetch("/api/agent/chat", {
@@ -70,62 +102,70 @@ export function useChat() {
           credentials: "include",
           body: JSON.stringify({
             message: content,
-            thread_id: threadIdRef.current,
+            thread_id: activeThreadIdRef.current,
           }),
           signal: abortController.signal,
         });
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
         const reader = res.body?.getReader();
         if (!reader) throw new Error("No response body");
 
         const decoder = new TextDecoder();
         let buffer = "";
+        let done = false;
 
-        while (!reachedDone) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        while (!done) {
+          const { done: streamDone, value } = await reader.read();
+          if (streamDone) break;
 
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
+          buffer = lines.pop() ?? "";
 
           for (const line of lines) {
             const trimmed = line.trim();
             if (!trimmed.startsWith("data: ")) continue;
-
             const payload = trimmed.slice(6);
-            if (payload === "[DONE]") {
-              reachedDone = true;
-              break;
-            }
+            if (payload === "[DONE]") { done = true; break; }
 
             try {
               const parsed: StreamPayload = JSON.parse(payload);
 
-              if (parsed.thread_id) {
-                threadIdRef.current = parsed.thread_id;
+              if (parsed.thread_id && !activeThreadIdRef.current) {
+                activeThreadIdRef.current = parsed.thread_id;
+                setActiveThreadId(parsed.thread_id);
+                upsertSession(role, {
+                  threadId: parsed.thread_id,
+                  title: content.slice(0, 30) + (content.length > 30 ? "…" : ""),
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                });
+                onSessionsChanged();
               }
 
               const text = extractContentText(parsed.content);
               if (!text) continue;
 
-              hasAssistantText = true;
+              hasText = true;
               flushSync(() => {
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantMsg.id ? { ...m, content: m.content + text } : m
-                  )
-                );
+                setMessages((prev) => {
+                  const updated = prev.map((m) =>
+                    m.id === assistantMsg.id
+                      ? { ...m, content: m.content + text }
+                      : m
+                  );
+                  messagesRef.current = updated;
+                  return updated;
+                });
               });
             } catch {
-              // skip malformed JSON chunks
+              // skip malformed JSON
             }
           }
         }
 
-        if (!hasAssistantText) {
+        if (!hasText) {
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantMsg.id
@@ -136,7 +176,6 @@ export function useChat() {
         }
       } catch (err) {
         if ((err as Error).name === "AbortError") return;
-
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantMsg.id
@@ -147,17 +186,21 @@ export function useChat() {
       } finally {
         setIsStreaming(false);
         abortRef.current = null;
+
+        // Only persist if this request was not aborted (user didn't switch thread)
+        if (!abortController.signal.aborted && activeThreadIdRef.current) {
+          const threadId = activeThreadIdRef.current;
+          saveMessages(threadId, messagesRef.current);
+          const session = getSessions(role).find((s) => s.threadId === threadId);
+          if (session) {
+            upsertSession(role, { ...session, updatedAt: new Date().toISOString() });
+            onSessionsChanged();
+          }
+        }
       }
     },
-    [isStreaming]
+    [isStreaming, role, onSessionsChanged]
   );
 
-  const resetChat = useCallback(() => {
-    abortRef.current?.abort();
-    setMessages([]);
-    threadIdRef.current = null;
-    setIsStreaming(false);
-  }, []);
-
-  return { messages, isStreaming, sendMessage, resetChat };
+  return { messages, isStreaming, activeThreadId, sendMessage, switchThread, newThread };
 }

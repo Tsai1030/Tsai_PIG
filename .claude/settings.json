@@ -7,7 +7,8 @@
       "Bash(.venv/Scripts/python -c \"from main import app; print\\('main.py OK'\\)\")",
       "Bash(pip list:*)",
       "Bash(where uvicorn:*)",
-      "Bash(python -c ':*)"
+      "Bash(python -c ':*)",
+      "Bash(pip show:*)"
     ]
   }
 }

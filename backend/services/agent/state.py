@@ -20,6 +20,7 @@ class AgentState(TypedDict):
     needs_reminder : turn >= 30 後每輪設為 True，結尾附加糖糖可愛提醒台詞
 
     -- 用戶與角色 --
+    user_id        : 資料庫用戶 ID（用於寫入收藏/日曆）
     user_role      : "her" 或 "him"
     user_input     : 本輪原始輸入
 
@@ -39,6 +40,7 @@ class AgentState(TypedDict):
     summary: str
     turn_count: int
     needs_reminder: bool
+    user_id: str
     user_role: str
     user_input: str
     user_preferences: dict
