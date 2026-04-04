@@ -1,66 +1,159 @@
 """
-Agent Tools — AI 工具函數
+Agent Tools — LangGraph @tool 定義
 
-⚠️ S6 pre-build 說明：
-    classify_restaurant 在 S6 以普通 async function 實作，供收藏模組直接 invoke。
-    S7 將此函數升級為 LangGraph @tool，並加入 reclassify_restaurant、
-    bind 進 StateGraph，完整整合進 Agent 對話流程。
-    S7 升級時只需：
-      1. 加上 @tool decorator 與 Pydantic Input Schema
-      2. 移除此檔案內的直接 OpenAI 呼叫，改由 ToolNode 驅動
+三個工具：
+1. classify_restaurant  — 根據餐廳名稱+地址+現有資料夾，LLM 動態分類
+2. reclassify_restaurant — 對話糾錯，將餐廳移到正確資料夾
+3. web_search           — Tavily 網路搜尋，查詢真實餐廳資訊
 """
 
+import json
 import logging
 
+import httpx
+from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from core.config import settings
 
 logger = logging.getLogger(__name__)
 
-_llm = ChatOpenAI(
-    model=settings.LLM_MAIN,
+_llm_classify = ChatOpenAI(
+    model=settings.LLM_NANO,
     api_key=settings.OPENAI_API_KEY,
+    max_completion_tokens=500,
 )
 
 
-class _ClassifyResult(BaseModel):
-    category: str
-    category_tags: list[str]
-    is_new_folder: bool
+# ── 1. classify_restaurant ──────────────────────────────────
 
 
-_llm_structured = _llm.with_structured_output(_ClassifyResult)
+class ClassifyInput(BaseModel):
+    restaurant_name: str = Field(description="餐廳名稱")
+    address: str = Field(description="餐廳地址（可空白）", default="")
+    available_folders: list[str] = Field(
+        description="目前已有的資料夾名稱列表", default=[]
+    )
 
-_CLASSIFY_PROMPT = """你是一個餐廳分類助手。請分析這間餐廳並決定：
-1. category：從現有資料夾中選最適合的，若都不符合則建立新的中文分類名稱（如：日式料理、火鍋、燒烤、咖啡甜點）
-2. category_tags：最多 3 個簡短中文標籤（如：辣、適合約會、平價）
-3. is_new_folder：若 category 不在現有資料夾中則為 true
+
+@tool("classify_restaurant", args_schema=ClassifyInput)
+def classify_restaurant(
+    restaurant_name: str,
+    address: str = "",
+    available_folders: list[str] = [],
+) -> dict:
+    """
+    根據餐廳名稱與地址，由 LLM 自行判斷最適合的餐廳類型。
+    優先歸入已有資料夾；若完全沒有合適的現有資料夾，才新建一個。
+    當使用者要收藏一家餐廳時呼叫此工具。
+    """
+    existing = "、".join(available_folders) if available_folders else "（目前尚無資料夾）"
+    prompt = f"""你是餐廳分類專家。根據餐廳名稱和地址，判斷這家餐廳最主要的類型。
 
 餐廳名稱：{restaurant_name}
 地址：{address}
-現有資料夾：{available_folders}"""
 
+目前已有的資料夾（請優先從中選一個）：
+{existing}
 
-async def classify_restaurant(
-    restaurant_name: str,
-    address: str,
-    available_folders: list[str],
-) -> dict:
-    """呼叫 LLM 分類餐廳，回傳 {category, category_tags, is_new_folder}。"""
-    prompt = _CLASSIFY_PROMPT.format(
-        restaurant_name=restaurant_name,
-        address=address,
-        available_folders="、".join(available_folders) if available_folders else "（目前沒有資料夾）",
-    )
+判斷規則：
+1. 若餐廳屬於上方任一資料夾 → 選那個資料夾（即使名稱略有差異，如「燒烤」vs「烤肉」請統一選已有的）
+2. 若沒有任何合適的現有資料夾 → 自己決定一個簡短的分類名稱（2-4 字，繁體中文）
+3. 只回傳 JSON，不要其他文字
+
+回傳格式：
+{{"category": "火鍋", "is_new_folder": false}}"""
+
     try:
-        result: _ClassifyResult = await _llm_structured.ainvoke(prompt)
+        response = _llm_classify.invoke(prompt)
+        result = json.loads(response.content)
+        category = result.get("category", "其他").strip()
+        is_new = result.get("is_new_folder", True)
         return {
-            "category": result.category,
-            "category_tags": result.category_tags,
-            "is_new_folder": result.is_new_folder,
+            "name": restaurant_name,
+            "category": category,
+            "is_new_folder": is_new,
         }
     except Exception as e:
         logger.error(f"classify_restaurant failed: {e}")
-        return {"category": "其他", "category_tags": [], "is_new_folder": False}
+        return {
+            "name": restaurant_name,
+            "category": "其他",
+            "is_new_folder": False,
+        }
+
+
+# ── 2. reclassify_restaurant ────────────────────────────────
+
+
+class ReclassifyInput(BaseModel):
+    restaurant_name: str = Field(description="要更正分類的餐廳名稱")
+    correct_category: str = Field(description="正確的分類資料夾名稱")
+
+
+@tool("reclassify_restaurant", args_schema=ReclassifyInput)
+def reclassify_restaurant(
+    restaurant_name: str,
+    correct_category: str,
+) -> dict:
+    """
+    當使用者在對話中說某家餐廳分類錯誤，呼叫此工具將其移到正確的資料夾。
+    觸發語句範例：「分錯了」「把XX移到XX」「應該是XX類」
+    """
+    return {
+        "restaurant_name": restaurant_name,
+        "correct_category": correct_category,
+        "action": "reclassify",
+        "message": f"已將「{restaurant_name}」移到「{correct_category}」資料夾 ✅",
+    }
+
+
+# ── 3. web_search ───────────────────────────────────────────
+
+
+class WebSearchInput(BaseModel):
+    query: str = Field(description="搜尋查詢，例如：台北中山區鴨肉麵推薦、好吃的日式拉麵 信義區")
+
+
+@tool("web_search", args_schema=WebSearchInput)
+async def web_search(query: str) -> str:
+    """
+    搜尋網路上最新的餐廳評論與美食推薦。
+    當使用者詢問特定地區或菜系的餐廳、或需要真實評價時使用。
+    不要用來分類或收藏餐廳，僅用於查詢資訊。
+    """
+    api_key = settings.TAVILY_WEBSEARCH_API_KEY
+    if not api_key:
+        return "網路搜尋功能未啟用（未設定 API 金鑰）。"
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.post(
+                "https://api.tavily.com/search",
+                json={
+                    "api_key": api_key,
+                    "query": query,
+                    "max_results": 3,
+                    "include_answer": True,
+                    "search_depth": "basic",
+                },
+            )
+            response.raise_for_status()
+            data = response.json()
+
+        parts: list[str] = []
+        answer = data.get("answer", "")
+        if answer:
+            parts.append(f"摘要：{answer}")
+
+        for result in data.get("results", [])[:3]:
+            title = result.get("title", "")
+            content = (result.get("content") or "")[:300]
+            if title and content:
+                parts.append(f"【{title}】\n{content}")
+
+        return "\n\n".join(parts) if parts else "未找到相關搜尋結果。"
+    except Exception as e:
+        logger.error(f"web_search failed: {e}")
+        return "搜尋時發生錯誤，請稍後再試。"

@@ -23,11 +23,12 @@ function buildOrderedFolders(grouped: FavoritesGrouped): [string, Favorite[]][] 
 
   const bottom = grouped[BOTTOM_KEY] ? [[BOTTOM_KEY, grouped[BOTTOM_KEY]] as [string, Favorite[]]] : [];
 
-  return [
+  const result: [string, Favorite[]][] = [
     [ALL_KEY, all],
     ...middle,
     ...bottom,
-  ].filter(([, favs]) => favs.length > 0);
+  ];
+  return result.filter(([, favs]) => favs.length > 0);
 }
 
 export function FolderList({ grouped, isLoading, canDelete, onAddToCalendar }: Props) {

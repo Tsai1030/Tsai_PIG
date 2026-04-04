@@ -9,7 +9,7 @@ from core.database import get_db
 from core.security import get_current_user
 from middleware.auth_middleware import require_role
 from repositories.favorite_repository import FavoriteRepository
-from schemas.favorite import FavoriteCreate, FavoriteResponse
+from schemas.favorite import FavoriteCreate, FavoriteResponse, ReclassifyRequest
 from services.favorite_service import FavoriteService
 
 router = APIRouter()
@@ -44,7 +44,18 @@ async def create_favorite(
     service: FavoriteService = Depends(get_favorite_service),
 ):
     """新增收藏餐廳，後端自動呼叫 classify_restaurant 填入分類（僅 her 可寫入）"""
-    return await service.create(current_user["user_id"], data)
+    return service.create(current_user["user_id"], data)
+
+
+@router.patch("/reclassify")
+async def reclassify_favorite(
+    body: ReclassifyRequest,
+    current_user: dict = Depends(require_role("her")),
+    service: FavoriteService = Depends(get_favorite_service),
+):
+    """reclassify：將餐廳移到正確的分類資料夾（僅 her 可操作）"""
+    service.update_category(body.restaurant_name, body.correct_category)
+    return {"message": f"已將「{body.restaurant_name}」移到「{body.correct_category}」資料夾 ✅"}
 
 
 @router.delete("/{favorite_id}", status_code=204)

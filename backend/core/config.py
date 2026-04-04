@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     # Google Maps
     GOOGLE_MAPS_API_KEY: str = ""
 
+    # Tavily Web Search
+    TAVILY_WEBSEARCH_API_KEY: str = ""
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",

@@ -14,6 +14,11 @@ class FavoriteCreate(BaseModel):
     maps_url: Optional[str] = None
 
 
+class ReclassifyRequest(BaseModel):
+    restaurant_name: str
+    correct_category: str
+
+
 class FavoriteResponse(BaseModel):
     model_config = {"from_attributes": True}
 

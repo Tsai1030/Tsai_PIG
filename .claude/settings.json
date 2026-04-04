@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where yarn:*)",
+      "Bash(where node:*)",
+      "Bash(\"C:\\\\Users\\\\user\\\\AppData\\\\Roaming\\\\npm\\\\yarn.cmd\" build:*)",
+      "Bash(.venv/Scripts/python -c \"from main import app; print\\('main.py OK'\\)\")",
+      "Bash(pip list:*)",
+      "Bash(where uvicorn:*)",
+      "Bash(python -c ':*)"
+    ]
+  }
+}

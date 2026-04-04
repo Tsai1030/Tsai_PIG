@@ -3,9 +3,15 @@
 Sweet Food Diary Backend Entry Point
 """
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
+)
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
@@ -14,7 +20,8 @@ from models.base import Base
 from models.favorite import Favorite  # noqa: F401 — 確保 ORM Model 被載入
 from models.user import User  # noqa: F401 — 確保 ORM Model 被載入
 from repositories.user_repository import UserRepository
-from routers import auth, calendar, favorites
+from routers import agent, auth, calendar, favorites
+from services.agent.store import close_checkpointer, get_checkpointer
 from services.auth_service import AuthService
 
 
@@ -27,7 +34,9 @@ async def lifespan(app: FastAPI):
         AuthService(UserRepository(db)).seed_default_users()
     finally:
         db.close()
+    await get_checkpointer()
     yield
+    await close_checkpointer()
     # ── Shutdown ──────────────────────────────────────────
 
 
@@ -61,4 +70,4 @@ async def health_check():
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(calendar.router, prefix="/api/calendar", tags=["Calendar"])
 app.include_router(favorites.router, prefix="/api/favorites", tags=["Favorites"])
-# app.include_router(agent.router, prefix="/api/agent", tags=["Agent"])
+app.include_router(agent.router, prefix="/api/agent", tags=["Agent"])

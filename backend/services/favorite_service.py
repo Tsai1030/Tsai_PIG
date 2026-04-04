@@ -23,22 +23,32 @@ class FavoriteService:
     def get_grouped(self) -> Dict[str, List[Favorite]]:
         return self.repo.get_grouped_by_category()
 
-    async def create(self, user_id: str, data: FavoriteCreate) -> Favorite:
+    def create(self, user_id: str, data: FavoriteCreate) -> Favorite:
         available_folders = self.repo.get_categories()
-        classification = await classify_restaurant(
-            restaurant_name=data.restaurant_name,
-            address=data.address,
-            available_folders=available_folders,
-        )
+        classification = classify_restaurant.invoke({
+            "restaurant_name": data.restaurant_name,
+            "address": data.address,
+            "available_folders": available_folders,
+        })
         fav = Favorite(
             user_id=user_id,
             restaurant_name=data.restaurant_name,
             address=data.address,
             maps_url=data.maps_url,
             category=classification["category"],
-            category_tags=classification["category_tags"],
         )
         return self.repo.create(fav)
+
+    def update_category(self, restaurant_name: str, new_category: str) -> Favorite:
+        """reclassify：依餐廳名稱找到收藏並更新分類。"""
+        fav = self.repo.find_by_name(restaurant_name)
+        if not fav:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"找不到餐廳：{restaurant_name}",
+            )
+        updated = self.repo.update_category(fav.id, new_category)
+        return updated
 
     def delete(self, favorite_id: str) -> None:
         fav = self.repo.get_by_id(favorite_id)

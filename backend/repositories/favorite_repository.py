@@ -45,3 +45,22 @@ class FavoriteRepository(BaseRepository[Favorite]):
             .all()
         )
 
+    def find_by_name(self, restaurant_name: str) -> Favorite | None:
+        """依餐廳名稱查找，同名多筆取最近收藏者。"""
+        return (
+            self.db.query(Favorite)
+            .filter(Favorite.restaurant_name == restaurant_name)
+            .order_by(Favorite.created_at.desc())
+            .first()
+        )
+
+    def update_category(self, favorite_id: str, new_category: str) -> Favorite | None:
+        """更新收藏的分類資料夾。"""
+        fav = self.get_by_id(favorite_id)
+        if not fav:
+            return None
+        fav.category = new_category
+        self.db.commit()
+        self.db.refresh(fav)
+        return fav
+

@@ -1,0 +1,7 @@
+"use client";
+
+import ChatWidget from "@/components/chat/ChatWidget";
+
+export default function HerChatPage() {
+  return <ChatWidget isHer />;
+}
