@@ -39,7 +39,7 @@ export default function RootLayout({
         geist.variable
       )}
     >
-      <body className="min-h-full flex flex-col font-sans">
+      <body className="h-full flex flex-col font-sans overflow-hidden">
         <Providers>{children}</Providers>
       </body>
     </html>

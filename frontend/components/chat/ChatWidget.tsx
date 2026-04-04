@@ -80,7 +80,7 @@ export default function ChatWidget({ isHer }: ChatWidgetProps) {
     : "您好，有什麼餐飲相關的問題嗎？";
 
   return (
-    <div className="flex flex-1 flex-col relative overflow-hidden">
+    <div className="flex flex-1 flex-col relative overflow-hidden min-h-0">
       <ChatSidebar
         sessions={sessions}
         activeThreadId={activeThreadId}
