@@ -2,7 +2,6 @@
 
 import { MessageSquareIcon, PlusIcon, TrashIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import type { ChatSession } from "@/types/chat";
 
 interface ChatSidebarProps {
@@ -18,8 +17,7 @@ interface ChatSidebarProps {
 function formatDate(iso: string): string {
   const date = new Date(iso);
   const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / 86400000);
   if (diffDays === 0) return "今天";
   if (diffDays === 1) return "昨天";
   return `${date.getMonth() + 1}/${date.getDate()}`;
@@ -38,80 +36,88 @@ export default function ChatSidebar({
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 z-20 bg-black/30"
+          className="fixed inset-0 z-40 transition-opacity"
           onClick={onClose}
           aria-hidden
+          style={{ background: "oklch(0 0 0 / 0.6)", backdropFilter: "blur(8px)" }}
         />
       )}
 
       <div
         className={cn(
-          "fixed left-0 top-0 bottom-0 z-30 w-72 bg-background border-r flex flex-col transition-transform duration-200 ease-in-out",
+          "fixed left-0 top-0 bottom-0 z-50 w-80 max-w-[88vw] flex flex-col transition-transform duration-300 ease-out",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
+        style={{
+          background: "linear-gradient(180deg, oklch(0.34 0.10 295), oklch(0.24 0.07 295))",
+          borderRight: "1px solid oklch(1 0 0 / 0.18)",
+          boxShadow: "var(--shadow-2xl)",
+        }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
-          <span className="text-sm font-semibold">對話紀錄</span>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8"
+        <div className="flex items-center justify-between px-5 py-4 shrink-0" style={{ borderBottom: "1px solid oklch(1 0 0 / 0.12)" }}>
+          <div>
+            <p className="font-display italic text-[var(--kawaii-glow)]" style={{ fontSize: 12 }}>Sessions</p>
+            <h3 className="font-serif font-bold text-white" style={{ fontSize: 18 }}>對話紀錄</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
               onClick={onNewChat}
+              className="size-9 rounded-full glass-kawaii flex items-center justify-center text-white hover:scale-110 transition"
               title="新對話"
             >
               <PlusIcon className="size-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8"
+            </button>
+            <button
               onClick={onClose}
+              className="size-9 rounded-full glass-kawaii flex items-center justify-center text-white hover:scale-110 transition"
               title="關閉"
             >
               <XIcon className="size-4" />
-            </Button>
+            </button>
           </div>
         </div>
 
         {/* Session list */}
-        <div className="flex-1 overflow-y-auto py-2 px-2">
+        <div className="flex-1 overflow-y-auto py-3 px-3">
           {sessions.length === 0 ? (
-            <p className="text-center text-xs text-muted-foreground py-10">
+            <p className="text-center text-sm text-white/50 py-12 font-serif">
               尚無對話紀錄
             </p>
           ) : (
             sessions.map((session) => (
               <div
                 key={session.threadId}
-                className={cn(
-                  "group flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors",
-                  activeThreadId === session.threadId
-                    ? "bg-accent"
-                    : "hover:bg-muted"
-                )}
                 onClick={() => onSelectSession(session.threadId)}
+                className={cn(
+                  "group flex items-center gap-3 px-3 py-3 rounded-2xl cursor-pointer transition-all",
+                  activeThreadId === session.threadId
+                    ? "bg-white/15 shadow"
+                    : "hover:bg-white/8"
+                )}
+                style={
+                  activeThreadId === session.threadId
+                    ? { border: "1px solid var(--primary)" }
+                    : undefined
+                }
               >
-                <MessageSquareIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                <MessageSquareIcon className="size-4 shrink-0 text-white/50" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm truncate leading-snug">{session.title}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="font-serif text-sm text-white truncate leading-snug">{session.title}</p>
+                  <p className="font-display italic text-xs text-white/45 mt-0.5">
                     {formatDate(session.updatedAt)}
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-6 opacity-0 group-hover:opacity-100 shrink-0 text-muted-foreground hover:text-destructive"
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onDeleteSession(session.threadId);
                   }}
+                  className="size-7 opacity-0 group-hover:opacity-100 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:text-[var(--destructive)] transition shrink-0"
                   title="刪除"
                 >
                   <TrashIcon className="size-3" />
-                </Button>
+                </button>
               </div>
             ))
           )}

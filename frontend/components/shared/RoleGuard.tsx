@@ -28,7 +28,7 @@ export default function RoleGuard({ allowedRole, children }: RoleGuardProps) {
       return;
     }
     if (allowedRole && role !== allowedRole) {
-      router.replace(role === "her" ? "/her/calendar" : "/him/calendar");
+      router.replace(`/${role}`);
     }
   }, [isLoggedIn, isLoading, role, allowedRole, router]);
 

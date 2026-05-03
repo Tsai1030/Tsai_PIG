@@ -2,112 +2,89 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================================
+   DESIGN SYSTEM — Sweet Food Diary
+   Two distinct visual worlds:
+   1. Paris Romantic (Landing + Login)
+   2. Kawaii Purple (Her/Him sections)
+   ============================================================ */
+
 :root {
-  --background: oklch(0.9940 0 0);
-  --foreground: oklch(0 0 0);
-  --card: oklch(0.9940 0 0);
-  --card-foreground: oklch(0 0 0);
-  --popover: oklch(0.9911 0 0);
-  --popover-foreground: oklch(0 0 0);
-  --primary: oklch(0.5608 0.1952 2.7932);
-  --primary-foreground: oklch(1.0000 0 0);
-  --secondary: oklch(0.2290 0.0036 228.9614);
-  --secondary-foreground: oklch(0.9540 0.0063 255.4755);
-  --muted: oklch(0.9702 0 0);
-  --muted-foreground: oklch(0.4386 0 0);
-  --accent: oklch(0.9194 0.0402 352.1774);
-  --accent-foreground: oklch(0.5608 0.1952 2.7932);
-  --destructive: oklch(0.6290 0.1902 23.0704);
-  --destructive-foreground: oklch(1.0000 0 0);
-  --border: oklch(0.9300 0.0094 286.2156);
-  --input: oklch(0.9401 0 0);
-  --ring: oklch(0 0 0);
-  --chart-1: oklch(0.7459 0.1483 156.4499);
-  --chart-2: oklch(0.5608 0.1952 2.7932);
-  --chart-3: oklch(0.7336 0.1758 50.5517);
-  --chart-4: oklch(0.6050 0.2526 302.1776);
-  --chart-5: oklch(0.5590 0 0);
-  --sidebar: oklch(0.9777 0.0051 247.8763);
-  --sidebar-foreground: oklch(0 0 0);
-  --sidebar-primary: oklch(0 0 0);
-  --sidebar-primary-foreground: oklch(1.0000 0 0);
-  --sidebar-accent: oklch(0.9401 0 0);
-  --sidebar-accent-foreground: oklch(0 0 0);
-  --sidebar-border: oklch(0.9401 0 0);
-  --sidebar-ring: oklch(0 0 0);
-  --font-sans: var(--font-montserrat), Montserrat, sans-serif;
-  --font-serif: Lora, serif;
-  --font-mono: IBM Plex Mono, monospace;
+  /* ===== Paris Romantic ===== */
+  --paris-cream: oklch(0.93 0.04 70);
+  --paris-gold: oklch(0.74 0.10 70);
+  --paris-burgundy: oklch(0.34 0.10 20);
+  --paris-rose: oklch(0.66 0.12 5);
+  --paris-ink: oklch(0.16 0.02 30);
+
+  /* ===== Kawaii Purple ===== */
+  --kawaii-bg: oklch(0.24 0.07 295);
+  --kawaii-deep: oklch(0.34 0.10 295);
+  --kawaii-mid: oklch(0.55 0.10 295);
+  --kawaii-soft: oklch(0.78 0.07 295);
+  --kawaii-pink: oklch(0.84 0.09 0);
+  --kawaii-cream: oklch(0.97 0.02 0);
+  --kawaii-glow: oklch(0.90 0.07 340);
+  --kawaii-her: oklch(0.74 0.13 350);
+  --kawaii-her-dark: oklch(0.62 0.13 350);
+  --kawaii-him: oklch(0.74 0.10 260);
+  --kawaii-him-dark: oklch(0.62 0.12 260);
+
+  /* ===== Semantic mapping (default = Kawaii Her, will be overridden) ===== */
+  --background: var(--kawaii-bg);
+  --foreground: oklch(1 0 0);
+  --card: oklch(1 0 0 / 0.12);
+  --card-foreground: oklch(1 0 0);
+  --popover: oklch(0.97 0.02 0);
+  --popover-foreground: oklch(0.34 0.10 295);
+  --primary: var(--kawaii-her);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(1 0 0 / 0.10);
+  --secondary-foreground: oklch(1 0 0);
+  --muted: oklch(1 0 0 / 0.08);
+  --muted-foreground: oklch(1 0 0 / 0.65);
+  --accent: var(--kawaii-her);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.65 0.20 25);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(1 0 0 / 0.18);
+  --input: oklch(1 0 0 / 0.10);
+  --ring: var(--kawaii-her);
+  --chart-1: var(--kawaii-her);
+  --chart-2: var(--kawaii-mid);
+  --chart-3: var(--kawaii-pink);
+  --chart-4: var(--kawaii-glow);
+  --chart-5: var(--kawaii-soft);
+  --sidebar: oklch(1 0 0 / 0.06);
+  --sidebar-foreground: oklch(1 0 0);
+  --sidebar-primary: var(--kawaii-her);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(1 0 0 / 0.10);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(1 0 0 / 0.12);
+  --sidebar-ring: var(--kawaii-her);
+
   --radius: 1.4rem;
-  --shadow-x: 0;
-  --shadow-y: 1px;
-  --shadow-blur: 3px;
-  --shadow-spread: 0px;
-  --shadow-opacity: 0.1;
-  --shadow-color: #000000;
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
-  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
-  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
-  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
-  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-  --tracking-normal: 0em;
-  --spacing: 0.27rem;
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --shadow-2xs: 0 1px 3px 0px hsl(290 30% 10% / 0.1);
+  --shadow-xs: 0 1px 3px 0px hsl(290 30% 10% / 0.1);
+  --shadow-sm: 0 4px 12px 0px hsl(290 30% 10% / 0.18);
+  --shadow: 0 8px 24px 0px hsl(290 30% 10% / 0.25);
+  --shadow-md: 0 12px 32px 0px hsl(290 30% 10% / 0.30);
+  --shadow-lg: 0 20px 60px 0px hsl(290 30% 10% / 0.35);
+  --shadow-xl: 0 24px 80px 0px hsl(290 30% 10% / 0.40);
+  --shadow-2xl: 0 30px 100px 0px hsl(290 30% 10% / 0.50);
 }
 
-.dark {
-  --background: oklch(0.1221 0 0);
-  --foreground: oklch(0.9551 0 0);
-  --card: oklch(0.2132 0.0042 264.4789);
-  --card-foreground: oklch(0.9551 0 0);
-  --popover: oklch(0.2568 0.0076 274.6528);
-  --popover-foreground: oklch(0.9551 0 0);
-  --primary: oklch(0.5608 0.1952 2.7932);
-  --primary-foreground: oklch(1.0000 0 0);
-  --secondary: oklch(0.2290 0.0036 228.9614);
-  --secondary-foreground: oklch(0.9551 0 0);
-  --muted: oklch(0.2940 0.0130 272.9312);
-  --muted-foreground: oklch(0.7058 0 0);
-  --accent: oklch(0.2795 0.0368 260.0310);
-  --accent-foreground: oklch(0.5608 0.1952 2.7932);
-  --destructive: oklch(0.7106 0.1661 22.2162);
-  --destructive-foreground: oklch(1.0000 0 0);
-  --border: oklch(0.3289 0.0092 268.3843);
-  --input: oklch(0.3289 0.0092 268.3843);
-  --ring: oklch(0.5608 0.1952 2.7932);
-  --chart-1: oklch(0.8003 0.1821 151.7110);
-  --chart-2: oklch(0.5608 0.1952 2.7932);
-  --chart-3: oklch(0.8077 0.1035 19.5706);
-  --chart-4: oklch(0.6691 0.1569 260.1063);
-  --chart-5: oklch(0.7058 0 0);
-  --sidebar: oklch(0.2011 0.0039 286.0396);
-  --sidebar-foreground: oklch(0.9551 0 0);
-  --sidebar-primary: oklch(0.5608 0.1952 2.7932);
-  --sidebar-primary-foreground: oklch(1.0000 0 0);
-  --sidebar-accent: oklch(0.2940 0.0130 272.9312);
-  --sidebar-accent-foreground: oklch(0.7320 0.2417 335.8450);
-  --sidebar-border: oklch(0.3289 0.0092 268.3843);
-  --sidebar-ring: oklch(0.7320 0.2417 335.8450);
-  --font-sans: var(--font-montserrat), Montserrat, sans-serif;
-  --font-serif: Lora, serif;
-  --font-mono: IBM Plex Mono, monospace;
-  --radius: 1.4rem;
-  --shadow-x: 0;
-  --shadow-y: 1px;
-  --shadow-blur: 3px;
-  --shadow-spread: 0px;
-  --shadow-opacity: 0.1;
-  --shadow-color: #000000;
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
-  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
-  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
-  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
-  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+/* Him role override — cooler purple/blue accent */
+[data-role="him"] {
+  --primary: var(--kawaii-him);
+  --accent: var(--kawaii-him);
+  --ring: var(--kawaii-him);
+  --sidebar-primary: var(--kawaii-him);
+  --sidebar-ring: var(--kawaii-him);
 }
 
 @theme inline {
@@ -144,14 +121,33 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
-  --font-serif: var(--font-serif);
+  --color-paris-cream: var(--paris-cream);
+  --color-paris-gold: var(--paris-gold);
+  --color-paris-burgundy: var(--paris-burgundy);
+  --color-paris-rose: var(--paris-rose);
+  --color-paris-ink: var(--paris-ink);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --color-kawaii-bg: var(--kawaii-bg);
+  --color-kawaii-deep: var(--kawaii-deep);
+  --color-kawaii-mid: var(--kawaii-mid);
+  --color-kawaii-soft: var(--kawaii-soft);
+  --color-kawaii-pink: var(--kawaii-pink);
+  --color-kawaii-cream: var(--kawaii-cream);
+  --color-kawaii-glow: var(--kawaii-glow);
+  --color-kawaii-her: var(--kawaii-her);
+  --color-kawaii-her-dark: var(--kawaii-her-dark);
+  --color-kawaii-him: var(--kawaii-him);
+  --color-kawaii-him-dark: var(--kawaii-him-dark);
+
+  --font-sans: var(--font-quicksand), var(--font-noto-tc), sans-serif;
+  --font-serif: var(--font-noto-tc), serif;
+  --font-display: var(--font-playfair), var(--font-noto-tc), serif;
+  --font-kawaii: var(--font-mochiy), var(--font-quicksand), sans-serif;
+
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 4px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 8px);
 
   --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);
@@ -164,11 +160,13 @@
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background: var(--kawaii-bg);
+    -webkit-font-smoothing: antialiased;
+    font-family: var(--font-sans);
     -webkit-tap-highlight-color: transparent;
   }
   button, a, [role="button"] {
@@ -176,4 +174,314 @@
     -webkit-user-select: none;
     user-select: none;
   }
+  /* Pretty scrollbars */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: oklch(1 0 0 / 0.15); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: oklch(1 0 0 / 0.3); }
+  ::-webkit-scrollbar-track { background: transparent; }
 }
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes float-y {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(3deg); }
+}
+@keyframes float-y-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes drift {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(15px, -10px) rotate(10deg); }
+  66% { transform: translate(-10px, -20px) rotate(-5deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+@keyframes sparkle-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 24px var(--kawaii-her), 0 0 0 0 oklch(1 0 0 / 0.2); }
+  50% { box-shadow: 0 0 48px var(--kawaii-her), 0 0 0 8px oklch(1 0 0 / 0.05); }
+}
+@keyframes bubble-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+@keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+@layer utilities {
+  .float-y { animation: float-y 6s ease-in-out infinite; }
+  .float-y-slow { animation: float-y-slow 4s ease-in-out infinite; }
+  .drift { animation: drift 12s ease-in-out infinite; }
+  .sparkle { animation: sparkle-pulse 2s ease-in-out infinite; }
+  .glow-pulse { animation: glow-pulse 2.5s ease-in-out infinite; }
+  .bubble-in { animation: bubble-in 0.5s var(--ease-bounce) backwards; }
+  .spin-slow { animation: spin-slow 40s linear infinite; }
+  .shake { animation: shake 0.4s; }
+
+  .text-shadow-soft { text-shadow: 0 2px 12px oklch(0.16 0.02 30 / 0.3); }
+  .text-glow { text-shadow: 0 0 20px oklch(0.90 0.07 340 / 0.6); }
+
+  .ease-soft { transition-timing-function: var(--ease-soft); }
+  .ease-bounce { transition-timing-function: var(--ease-bounce); }
+}
+
+/* ============================================================
+   PARIS BACKGROUND
+   ============================================================ */
+.paris-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/background.png');
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.85) saturate(1.1);
+}
+.paris-bg::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg,
+    oklch(0.16 0.02 30 / 0.1) 0%,
+    oklch(0.16 0.02 30 / 0.45) 60%,
+    oklch(0.16 0.02 30 / 0.85) 100%);
+}
+.paris-grain {
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(0deg, transparent 0 2px, oklch(1 0 0 / 0.015) 2px 3px);
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* ============================================================
+   KAWAII BACKGROUND
+   ============================================================ */
+.kawaii-bg-image {
+  position: fixed;
+  inset: 0;
+  background-image: url('/background1.png');
+  background-size: cover;
+  background-position: center;
+  filter: saturate(1.15);
+  z-index: -2;
+}
+.kawaii-bg-image::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, transparent 0%, oklch(0.24 0.07 295 / 0.6) 70%);
+}
+.kawaii-bg-solid {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 10%, var(--kawaii-her) 0%, transparent 40%),
+    radial-gradient(ellipse at 80% 90%, var(--kawaii-mid) 0%, transparent 40%),
+    linear-gradient(180deg, var(--kawaii-deep) 0%, var(--kawaii-bg) 100%);
+  z-index: -2;
+}
+
+/* ============================================================
+   GLASS CARDS
+   ============================================================ */
+.glass-paris {
+  background: oklch(0.93 0.04 70 / 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid oklch(0.74 0.10 70 / 0.3);
+  box-shadow: var(--shadow-lg);
+  color: var(--paris-ink);
+}
+.glass-kawaii {
+  background: oklch(1 0 0 / 0.12);
+  backdrop-filter: blur(20px);
+  border: 1px solid oklch(1 0 0 / 0.20);
+  box-shadow: var(--shadow);
+}
+.glass-kawaii-strong {
+  background: oklch(0.97 0.02 0 / 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--kawaii-her);
+  box-shadow: var(--shadow-md);
+  color: var(--kawaii-deep);
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn-paris {
+  background: var(--paris-burgundy);
+  color: var(--paris-cream);
+  padding: 14px 32px;
+  border: 0;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.4s var(--ease-soft);
+  position: relative;
+  overflow: hidden;
+}
+.btn-paris::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 30%, oklch(0.74 0.10 70 / 0.4) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+.btn-paris:hover { transform: translateY(-2px); box-shadow: 0 12px 32px oklch(0.34 0.10 20 / 0.5); }
+.btn-paris:hover::after { transform: translateX(100%); }
+.btn-paris:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-kawaii {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--kawaii-mid) 100%);
+  color: white;
+  padding: 12px 24px;
+  border: 0;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-bounce);
+  box-shadow: 0 8px 24px oklch(0 0 0 / 0.3);
+}
+.btn-kawaii:hover { transform: translateY(-3px) scale(1.03); }
+.btn-kawaii:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn-kawaii-ghost {
+  background: oklch(1 0 0 / 0.12);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 12px 24px;
+  border: 1px solid oklch(1 0 0 / 0.25);
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-soft);
+}
+.btn-kawaii-ghost:hover { background: oklch(1 0 0 / 0.20); transform: translateY(-2px); }
+
+/* ============================================================
+   SCROLL REVEAL (used with IntersectionObserver)
+   ============================================================ */
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.9s var(--ease-soft), transform 0.9s var(--ease-soft); }
+.reveal.in { opacity: 1; transform: translateY(0); }
+.reveal-left { opacity: 0; transform: translateX(-60px) rotate(-4deg); transition: all 1s var(--ease-soft); }
+.reveal-left.in { opacity: 1; transform: translateX(0) rotate(0deg); }
+.reveal-right { opacity: 0; transform: translateX(60px) rotate(4deg); transition: all 1s var(--ease-soft); }
+.reveal-right.in { opacity: 1; transform: translateX(0) rotate(0deg); }
+.reveal-scale { opacity: 0; transform: scale(0.85); transition: all 0.8s var(--ease-bounce); }
+.reveal-scale.in { opacity: 1; transform: scale(1); }
+
+/* ============================================================
+   DECORATIONS — floating hearts/stars
+   ============================================================ */
+.deco-heart::before {
+  content: '\2665';
+  font-size: inherit;
+  color: var(--kawaii-pink);
+  filter: drop-shadow(0 0 8px var(--kawaii-pink));
+}
+.deco-star::before {
+  content: '\2726';
+  font-size: inherit;
+  color: var(--kawaii-glow);
+  filter: drop-shadow(0 0 8px var(--kawaii-glow));
+}
+
+/* ============================================================
+   CHAT BUBBLES
+   ============================================================ */
+.chat-bubble-self {
+  max-width: 75%;
+  padding: 14px 20px;
+  border-radius: 24px;
+  border-bottom-right-radius: 6px;
+  margin-left: auto;
+  background: linear-gradient(135deg, var(--primary), var(--kawaii-her-dark));
+  color: white;
+  box-shadow: 0 4px 16px oklch(0 0 0 / 0.25);
+}
+.chat-bubble-bot {
+  max-width: 75%;
+  padding: 14px 20px;
+  border-radius: 24px;
+  border-bottom-left-radius: 6px;
+  background: linear-gradient(135deg, var(--kawaii-mid), var(--kawaii-deep));
+  color: white;
+  box-shadow: 0 4px 16px oklch(0 0 0 / 0.4);
+}
+
+/* ============================================================
+   SCROLL STACK (Favorites)
+   ============================================================ */
+.stack-card {
+  position: sticky;
+  top: 120px;
+  border-radius: 28px;
+  overflow: hidden;
+  transform-origin: 50% 0%;
+  transition: transform 0.3s var(--ease-soft);
+}
+.stack-card:nth-child(odd) { rotate: -1deg; }
+.stack-card:nth-child(even) { rotate: 1deg; }
+
+/* ============================================================
+   CALENDAR CELLS
+   ============================================================ */
+.cal-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-soft);
+  font-weight: 600;
+  position: relative;
+}
+.cal-cell:hover { background: oklch(1 0 0 / 0.15); transform: scale(1.05); }
+.cal-cell.has-event::after {
+  content: ''; position: absolute; bottom: 6px;
+  width: 6px; height: 6px; border-radius: 999px;
+  background: var(--kawaii-pink);
+  box-shadow: 0 0 8px var(--kawaii-pink);
+}
+.cal-cell.today { background: linear-gradient(135deg, var(--primary), var(--kawaii-mid)); color: white; }
+.cal-cell.muted { opacity: 0.3; }
+
+/* ============================================================
+   MAP CHIPS
+   ============================================================ */
+.map-chip {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: oklch(0.97 0.02 0 / 0.95);
+  color: var(--kawaii-deep);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-soft);
+  box-shadow: var(--shadow);
+  white-space: nowrap;
+  border: 0;
+}
+.map-chip.active {
+  background: linear-gradient(135deg, var(--primary), var(--kawaii-mid));
+  color: white;
+}
+
+/* ============================================================
+   MAP iframe — purple tint
+   ============================================================ */
+.map-frame { filter: hue-rotate(220deg) saturate(0.85) brightness(0.9); }

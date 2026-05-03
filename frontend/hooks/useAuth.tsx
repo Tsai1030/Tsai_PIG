@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setState({ role, nickname, isLoggedIn: true, isLoading: false });
 
       // 根據角色導向不同首頁
-      router.push(role === "her" ? "/her/calendar" : "/him/calendar");
+      router.push(`/${role}`);
     },
     [router]
   );

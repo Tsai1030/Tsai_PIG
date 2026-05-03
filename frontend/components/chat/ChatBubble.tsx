@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { ChatMessage } from "@/types/chat";
 
 interface ChatBubbleProps {
@@ -12,28 +11,28 @@ interface ChatBubbleProps {
 export default function ChatBubble({ message, isHer }: ChatBubbleProps) {
   const isUser = message.role === "user";
 
+  if (isUser) {
+    return (
+      <div className="flex justify-end mb-3 bubble-in">
+        <div className="chat-bubble-self whitespace-pre-wrap text-sm leading-relaxed">
+          {message.content}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={cn(
-        "flex items-end gap-2",
-        isUser ? "flex-row-reverse" : "flex-row"
-      )}
-    >
-      {!isUser && (
-        <Avatar size="sm">
-          <AvatarFallback className="bg-pink-100 text-pink-600 text-xs">
-            {isHer ? "🍬" : "AI"}
-          </AvatarFallback>
-        </Avatar>
-      )}
+    <div className="flex items-end gap-2 mb-3 bubble-in">
       <div
-        className={cn(
-          "max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
-          isUser
-            ? "bg-primary text-primary-foreground rounded-br-sm"
-            : "bg-muted rounded-bl-sm"
-        )}
+        className="text-xl shrink-0 mb-1"
+        style={{ filter: "drop-shadow(0 0 8px var(--primary))" }}
       >
+        ✦
+      </div>
+      <div className={cn("chat-bubble-bot whitespace-pre-wrap text-sm leading-relaxed")}>
+        <p className="font-display italic text-xs mb-1 opacity-70">
+          {isHer ? "糖糖" : "阿哲"} · AI
+        </p>
         {message.content}
       </div>
     </div>
