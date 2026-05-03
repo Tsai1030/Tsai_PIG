@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any, AsyncGenerator
 
-from langchain_core.messages import AIMessage, SystemMessage
+from langchain_core.messages import BaseMessage
 
 from .agent.graph import build_graph
 from .agent.store import get_checkpointer, memory_store, reset_thread
@@ -39,11 +39,47 @@ def _extract_text(content: Any) -> str:
     return ""
 
 
-def _is_primary_llm_event(event: dict[str, Any]) -> bool:
-    metadata = event.get("metadata", {})
+def _extract_output_text(output: Any) -> str:
+    if isinstance(output, BaseMessage):
+        return _extract_text(output.content)
+
+    if isinstance(output, dict):
+        content_text = _extract_text(output.get("content"))
+        if content_text:
+            return content_text
+
+        messages = output.get("messages")
+        if isinstance(messages, list):
+            for message in reversed(messages):
+                message_text = _extract_output_text(message)
+                if message_text:
+                    return message_text
+
+    if isinstance(output, list):
+        parts = [_extract_output_text(item) for item in output]
+        return "".join(part for part in parts if part)
+
+    return ""
+
+
+def _is_primary_llm_metadata(metadata: Any) -> bool:
     if not isinstance(metadata, dict):
         return False
     return metadata.get("langgraph_node") == "llm"
+
+
+def _extract_state_text(state: Any) -> str:
+    if not isinstance(state, dict):
+        return ""
+
+    messages = state.get("messages")
+    if isinstance(messages, list):
+        for message in reversed(messages):
+            message_text = _extract_output_text(message)
+            if message_text:
+                return message_text
+
+    return _extract_output_text(state)
 
 
 async def _get_graph():
@@ -84,33 +120,35 @@ class AgentService:
         input_state = {"user_input": user_input, "user_role": user_role, "user_id": user_id}
         emitted_text = False
         fallback_text = ""
+        streamed_text = ""
         checkpoint_error = False
 
         try:
-            async for event in graph.astream_events(input_state, config=config, version="v2"):
-                etype = event.get("event", "")
-                metadata = event.get("metadata", {})
-                node_name = metadata.get("langgraph_node") if isinstance(metadata, dict) else None
+            async for mode, payload in graph.astream(
+                input_state,
+                config=config,
+                stream_mode=["messages", "values"],
+            ):
+                if mode == "messages":
+                    chunk, metadata = payload
+                    node_name = metadata.get("langgraph_node") if isinstance(metadata, dict) else None
+                    logger.info("agent_stream mode=messages node=%s", node_name)
 
-                logger.info("agent_event event=%s node=%s", etype, node_name)
+                    if not _is_primary_llm_metadata(metadata):
+                        continue
 
-                if not _is_primary_llm_event(event):
-                    continue
-
-                if etype == "on_chat_model_stream":
-                    chunk = event.get("data", {}).get("chunk")
                     chunk_text = _extract_text(getattr(chunk, "content", None))
                     if chunk_text:
                         emitted_text = True
+                        streamed_text += chunk_text
                         yield chunk_text
                     continue
 
-                if etype == "on_chat_model_end":
-                    output = event.get("data", {}).get("output")
-                    end_text = _extract_text(getattr(output, "content", None))
-                    logger.info("agent_llm_end node=%s has_text=%s", node_name, bool(end_text))
-                    if end_text and not emitted_text:
-                        fallback_text = end_text
+                if mode == "values":
+                    logger.info("agent_stream mode=values")
+                    state_text = _extract_state_text(payload)
+                    if state_text:
+                        fallback_text = state_text
 
         except Exception as exc:
             err_str = str(exc)
@@ -132,6 +170,10 @@ class AgentService:
 
         if checkpoint_error and is_retry:
             yield "抱歉，對話記憶讀取失敗，已自動重置，請重新傳送您的訊息。"
+            return
+
+        if emitted_text and fallback_text.startswith(streamed_text) and len(fallback_text) > len(streamed_text):
+            yield fallback_text[len(streamed_text):]
             return
 
         if not emitted_text and fallback_text:

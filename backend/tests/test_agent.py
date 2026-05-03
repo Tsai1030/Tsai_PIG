@@ -3,6 +3,11 @@
 test_agent -- Agent System Prompt loading tests
 """
 
+import asyncio
+
+from langchain_core.messages import AIMessage
+
+from services.agent_service import AgentService
 from services.agent.prompts import SUGAR_BASE_PROMPT, HIM_BASE_PROMPT, build_system_prompt
 
 
@@ -46,3 +51,93 @@ class TestBuildSystemPrompt:
 
     def test_him_prompt_mentions_classify_tool(self):
         assert "classify_restaurant" in HIM_BASE_PROMPT
+
+
+class FakeGraph:
+    def __init__(self, chunks):
+        self._chunks = chunks
+
+    async def astream(self, *_args, **_kwargs):
+        for chunk in self._chunks:
+            yield chunk
+
+
+def _collect_stream_chunks(service: AgentService, events) -> list[str]:
+    async def _run() -> list[str]:
+        async def _fake_get_graph():
+            return FakeGraph(events)
+
+        from services import agent_service
+
+        original = agent_service._get_graph
+        agent_service._get_graph = _fake_get_graph
+        try:
+            return [
+                chunk
+                async for chunk in service.stream_chat(
+                    thread_id="thread-1",
+                    user_input="你好",
+                    user_role="her",
+                    user_id="user-1",
+                )
+            ]
+        finally:
+            agent_service._get_graph = original
+
+    return asyncio.run(_run())
+
+
+class TestAgentServiceStreaming:
+    def test_stream_chat_streams_message_chunks(self):
+        chunks = _collect_stream_chunks(
+            AgentService(),
+            [
+                ("messages", (AIMessage(content="糖糖"), {"langgraph_node": "llm"})),
+                ("messages", (AIMessage(content="有收到"), {"langgraph_node": "llm"})),
+                (
+                    "values",
+                    {
+                        "messages": [
+                            AIMessage(content="糖糖有收到"),
+                        ]
+                    },
+                ),
+            ],
+        )
+
+        assert chunks == ["糖糖", "有收到"]
+
+    def test_stream_chat_uses_final_state_when_no_message_chunks(self):
+        chunks = _collect_stream_chunks(
+            AgentService(),
+            [
+                (
+                    "values",
+                    {
+                        "messages": [
+                            AIMessage(content="這是沒有 token stream 時的完整回覆。"),
+                        ]
+                    },
+                ),
+            ],
+        )
+
+        assert chunks == ["這是沒有 token stream 時的完整回覆。"]
+
+    def test_stream_chat_appends_postprocess_suffix_after_stream(self):
+        chunks = _collect_stream_chunks(
+            AgentService(),
+            [
+                ("messages", (AIMessage(content="先回答"), {"langgraph_node": "llm"})),
+                (
+                    "values",
+                    {
+                        "messages": [
+                            AIMessage(content="先回答，再補一句提醒"),
+                        ]
+                    },
+                ),
+            ],
+        )
+
+        assert chunks == ["先回答", "，再補一句提醒"]
