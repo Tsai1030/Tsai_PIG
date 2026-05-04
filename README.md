@@ -1,5 +1,9 @@
 # 甜蜜食記 Sweet Food Diary
 
+<p align="center">
+  <img src="frontend/public/background1.png" alt="Sweet Food Diary Banner" width="100%">
+</p>
+
 甜蜜食記是一個為情侶設計的美食規劃系統，核心概念是「她規劃、他執行」。
 系統把日常最常見的問題「今天要吃什麼」拆成可操作的流程：先用 AI 協助找方向，再用地圖探索店家、把喜歡的店收藏起來，最後安排進共享日曆，讓兩個人都能看到接下來的用餐計畫。
 
@@ -9,6 +13,38 @@
 - 後端：FastAPI + SQLAlchemy
 - 資料庫：SQLite 為目前開發預設
 - AI：OpenAI + LangGraph
+
+---
+
+## 畫面預覽
+
+### App Demo
+
+<p align="center">
+  <video src="frontend/public/APP使用畫面.mp4" controls width="360" style="border-radius:12px; max-width:100%"></video>
+</p>
+
+> 若影片無法在此頁面直接播放，請[點此下載觀看](frontend/public/APP使用畫面.mp4)。
+
+### 登入畫面
+
+<p align="center">
+  <img src="frontend/public/登入畫面.png" alt="登入畫面" width="360" style="border-radius:12px">
+</p>
+
+### 角色設定
+
+<p align="center">
+
+| 她 · La Princesse | 他 · Le Prince |
+|:---:|:---:|
+| <img src="frontend/public/her-pic.png" alt="她" width="160"> | <img src="frontend/public/him-pic.png" alt="他" width="160"> |
+| **美食規劃者** | **美食執行者** |
+| 搜尋餐廳・管理收藏・安排日曆 | 查看安排・配合執行・AI 諮詢 |
+
+</p>
+
+---
 
 ## 系統在做什麼
 
@@ -462,7 +498,6 @@ pytest
 - 新增 `.env.example` 與安裝腳本
 - 補正式版 Docker / compose 文件
 - 增加 PostgreSQL 切換教學
-- 增加畫面截圖到 README
 - 增加權限矩陣與 API 範例 request/response
 
 ---
