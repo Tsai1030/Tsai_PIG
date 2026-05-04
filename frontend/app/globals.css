@@ -244,6 +244,7 @@
 .paris-bg {
   position: absolute;
   inset: 0;
+  z-index: 0;
   background-image: url('/background.png');
   background-size: cover;
   background-position: center;
@@ -259,6 +260,7 @@
 }
 .paris-grain {
   position: absolute; inset: 0;
+  z-index: 1;
   background-image: repeating-linear-gradient(0deg, transparent 0 2px, oklch(1 0 0 / 0.015) 2px 3px);
   pointer-events: none;
   mix-blend-mode: overlay;

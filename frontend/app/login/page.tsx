@@ -67,8 +67,8 @@ export default function LoginPage() {
       <div className="paris-grain" />
 
       {/* Header brand */}
-      <div className="absolute top-0 left-0 right-0 z-10 px-8 py-8 flex justify-between items-center">
-        <div className="font-display italic" style={{ color: "var(--paris-cream)", fontSize: 24 }}>
+      <div className="absolute top-0 left-0 right-0 z-10 px-4 py-4 md:px-8 md:py-8 flex justify-between items-center">
+        <div className="font-display italic" style={{ color: "var(--paris-cream)", fontSize: "clamp(14px, 4vw, 24px)" }}>
           Sweet · Food · Diary
         </div>
         <div className="font-display tracking-[0.3em] text-xs" style={{ color: "var(--paris-gold)" }}>
@@ -77,9 +77,10 @@ export default function LoginPage() {
       </div>
 
       {/* Center content */}
-      <div className="absolute inset-0 flex items-center justify-center px-6">
+      <div className="absolute inset-0 overflow-y-auto">
+        <div className="min-h-full flex flex-col items-center justify-center px-4 py-20 md:px-6 md:py-8">
         <div className="w-full max-w-5xl">
-          <div className="text-center mb-12">
+          <div className="text-center mb-6 md:mb-12">
             <p className="font-display italic mb-3" style={{ color: "var(--paris-gold)", fontSize: 20 }}>
               — Welcome back —
             </p>
@@ -92,7 +93,7 @@ export default function LoginPage() {
           </div>
 
           {/* Role cards */}
-          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-3 md:gap-6 max-w-3xl mx-auto">
             {ROLES.map((r) => {
               const isSelected = selected === r.role;
               const isOther = selected !== null && selected !== r.role;
@@ -104,9 +105,8 @@ export default function LoginPage() {
                     setPassword("");
                     setError("");
                   }}
-                  className="relative overflow-hidden text-left transition-all duration-500 group cursor-pointer"
+                  className="relative overflow-hidden text-left transition-all duration-500 group cursor-pointer h-[200px] md:h-[380px]"
                   style={{
-                    height: 380,
                     borderRadius: 8,
                     border: `1px solid ${isSelected ? r.accent : "oklch(0.74 0.10 70 / 0.3)"}`,
                     background: "oklch(0.16 0.02 30 / 0.5)",
@@ -138,14 +138,14 @@ export default function LoginPage() {
                       }}
                     />
                   </div>
-                  <div className="relative z-10 p-8 flex flex-col h-full justify-between">
+                  <div className="relative z-10 p-5 md:p-8 flex flex-col h-full justify-between">
                     <div>
                       <p className="font-display italic tracking-wider" style={{ color: r.accent, fontSize: 18 }}>
                         {r.subtitle}
                       </p>
                       <h3
                         className="font-serif font-black mt-2"
-                        style={{ color: "var(--paris-cream)", fontSize: 80, lineHeight: 1 }}
+                        style={{ color: "var(--paris-cream)", fontSize: "clamp(48px, 12vw, 80px)", lineHeight: 1 }}
                       >
                         {r.label}
                       </h3>
@@ -214,6 +214,7 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

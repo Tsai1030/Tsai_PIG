@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useReveal } from "@/hooks/useReveal";
@@ -9,7 +9,6 @@ export default function LandingPage() {
   const router = useRouter();
   const { isLoggedIn, isLoading, role } = useAuth();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [scrollY, setScrollY] = useState(0);
 
   const titleRef = useReveal<HTMLDivElement>();
   const storyRef = useReveal<HTMLDivElement>();
@@ -24,14 +23,6 @@ export default function LandingPage() {
     }
   }, [isLoading, isLoggedIn, role, router]);
 
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const onScroll = () => setScrollY(el.scrollTop);
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, []);
-
   if (isLoggedIn) return null;
 
   return (
@@ -45,10 +36,6 @@ export default function LandingPage() {
         <section className="relative" style={{ height: "100vh", minHeight: 720 }}>
           <div
             className="paris-bg"
-            style={{
-              transform: `translateY(${scrollY * 0.4}px) scale(${1 + scrollY * 0.0003})`,
-              transition: "transform 0.05s linear",
-            }}
           />
           <div className="paris-grain" />
 
