@@ -24,7 +24,7 @@ export default function HimMapPage() {
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       {/* 搜尋列 */}
-      <div className="shrink-0 px-4 pt-4 pb-3">
+      <div className="shrink-0 px-3 sm:px-6 pt-2 pb-3">
         <SearchBar onSearch={setQuery} defaultValue={DEFAULT_QUERY} />
       </div>
 
@@ -35,19 +35,25 @@ export default function HimMapPage() {
           <MapEmbed query={query} />
 
           {/* 手機：開啟收藏 Drawer 的浮動按鈕 */}
-          <div className="absolute bottom-5 left-5 md:hidden">
+          <div className="absolute bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] left-4 md:hidden">
             <Drawer>
               <DrawerTrigger asChild>
-                <button className="flex items-center gap-2 rounded-full bg-white/90 backdrop-blur-sm px-4 py-2.5 text-sm font-medium shadow-lg shadow-black/10 border border-border/50 transition-all duration-200 hover:bg-white hover:shadow-md active:scale-95">
-                  <ListIcon className="size-4 text-foreground/70" />
-                  <span>收藏 {favorites.length}</span>
+                <button className="btn-kawaii-ghost flex items-center gap-2">
+                  <ListIcon className="size-4" />
+                  <span className="text-sm">收藏 {favorites.length}</span>
                 </button>
               </DrawerTrigger>
-              <DrawerContent>
+              <DrawerContent
+                style={{
+                  background: "linear-gradient(180deg, oklch(0.34 0.10 295), oklch(0.24 0.07 295))",
+                  border: "none",
+                  borderTop: "1px solid oklch(1 0 0 / 0.18)",
+                }}
+              >
                 <DrawerHeader>
-                  <DrawerTitle>收藏清單</DrawerTitle>
+                  <DrawerTitle className="text-white font-serif">收藏清單</DrawerTitle>
                 </DrawerHeader>
-                <div className="max-h-[60vh] overflow-y-auto pb-4">
+                <div className="max-h-[60vh] overflow-y-auto pb-[env(safe-area-inset-bottom,16px)]">
                   <FavoritesSidebar
                     favorites={favorites}
                     isLoading={isLoading}

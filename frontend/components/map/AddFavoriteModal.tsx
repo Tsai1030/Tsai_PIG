@@ -50,17 +50,18 @@ export function AddFavoriteModal({ open, onClose, initialQuery = "" }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center px-4 bubble-in"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:px-4 bubble-in"
       style={{ background: "oklch(0 0 0 / 0.6)", backdropFilter: "blur(8px)" }}
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md rounded-3xl overflow-hidden"
+        className="relative w-full max-w-md sm:rounded-3xl rounded-t-3xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         style={{
           background: "linear-gradient(180deg, oklch(0.34 0.10 295), oklch(0.24 0.07 295))",
           border: "1px solid oklch(1 0 0 / 0.18)",
           boxShadow: "var(--shadow-2xl)",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
       >
         <button

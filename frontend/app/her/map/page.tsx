@@ -19,10 +19,8 @@ export default function HerMapPage() {
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       {/* Search bar overlay (sticky on top) */}
-      <div className="shrink-0 px-4 sm:px-6 pt-2 pb-4">
-        <div className="max-w-3xl mx-auto">
-          <SearchBar onSearch={setQuery} defaultValue={DEFAULT_QUERY} />
-        </div>
+      <div className="shrink-0 px-3 sm:px-6 pt-2 pb-3">
+        <SearchBar onSearch={setQuery} defaultValue={DEFAULT_QUERY} />
       </div>
 
       {/* Map + sidebar */}
@@ -33,8 +31,8 @@ export default function HerMapPage() {
           {/* Floating add favorite button */}
           <button
             onClick={() => setAddOpen(true)}
-            className="absolute bottom-6 right-6 z-10 flex items-center gap-2 btn-kawaii"
-            style={{ padding: "12px 20px" }}
+            className="absolute bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] right-4 sm:right-6 z-10 flex items-center gap-2 btn-kawaii"
+            style={{ padding: "10px 16px" }}
             aria-label="加入收藏"
           >
             <HeartIcon className="size-4 fill-current" />
@@ -44,10 +42,10 @@ export default function HerMapPage() {
           {/* Mobile favorites drawer trigger */}
           <button
             onClick={() => setDrawerOpen(true)}
-            className="md:hidden absolute bottom-6 left-6 z-10 flex items-center gap-2 btn-kawaii-ghost"
+            className="md:hidden absolute bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] left-4 z-10 flex items-center gap-2 btn-kawaii-ghost"
           >
             <ListIcon className="size-4" />
-            <span>收藏 {favorites.length}</span>
+            <span className="text-sm">收藏 {favorites.length}</span>
           </button>
         </div>
 
