@@ -21,10 +21,8 @@
 ### App Demo
 
 <p align="center">
-  <video src="frontend/public/APP使用畫面.mp4" controls width="360" style="border-radius:12px; max-width:100%"></video>
+  <img src="frontend/public/APP使用畫面1.gif" alt="App Demo" width="360" style="border-radius:12px">
 </p>
-
-> 若影片無法在此頁面直接播放，請[點此下載觀看](frontend/public/APP使用畫面.mp4)。
 
 ### 登入畫面
 
@@ -259,6 +257,107 @@ Browser
 2. Next.js route handler 轉發到後端
 3. FastAPI 以 SSE 串流回傳內容
 4. LangGraph 依角色與狀態執行對話流程
+
+## 系統流程圖
+
+### 使用者操作流程
+
+```mermaid
+flowchart TD
+    A([使用者開啟 App]) --> B[Landing Page]
+    B --> C[登入頁 · 選擇角色]
+    C --> D{角色驗證}
+    D -->|her| E[/her/calendar]
+    D -->|him| F[/him/calendar]
+
+    E --> G[📅 日曆管理]
+    E --> H[🗺️ 地圖探索]
+    E --> I[❤️ 收藏清單]
+    E --> J[💬 AI 對話 · 糖糖]
+
+    F --> K[📅 查看日曆]
+    F --> L[❤️ 查看收藏]
+    F --> M[💬 AI 對話 · 阿哲]
+
+    G -->|新增/修改餐點| N[(SQLite DB)]
+    H -->|加入收藏| I
+    I -->|安排到日曆| G
+    J -->|工具呼叫| I
+    J -->|工具呼叫| G
+```
+
+### 資料流架構
+
+```mermaid
+graph LR
+    Browser["🌐 Browser"]
+    Next["Next.js\nFrontend"]
+    FastAPI["FastAPI\nBackend"]
+    DB[("SQLite")]
+    OpenAI["OpenAI\nAPI"]
+    Tavily["Tavily\nSearch"]
+    GMaps["Google Maps\nEmbed API"]
+
+    Browser -->|HTTP / SSE| Next
+    Next -->|/api/* proxy| FastAPI
+    Next -->|Embed iframe| GMaps
+    FastAPI --> DB
+    FastAPI --> OpenAI
+    FastAPI --> Tavily
+```
+
+---
+
+## State Management
+
+專案採用分層狀態管理，不同類型的狀態由不同機制負責：
+
+### 1. 伺服器狀態 — TanStack Query
+
+日曆、收藏等需要與後端同步的資料，統一使用 **TanStack Query (React Query)** 管理：
+
+| Hook | Query Key | 說明 |
+|---|---|---|
+| `useCalendar(year, month)` | `["calendar", year, month]` | 月份餐點資料，含快取與自動失效 |
+| `useFavorites()` | `["favorites"]` | 收藏 flat list |
+| `useFavoritesGrouped()` | `["favorites", "grouped"]` | 收藏分組資料 |
+| `useUpsertMealPlan()` | mutation → invalidate calendar | 新增/更新餐點 |
+| `useDeleteMealPlan()` | mutation → invalidate calendar | 刪除餐點 |
+
+### 2. 認證狀態 — React Context
+
+登入身份與角色資訊由 `AuthProvider` 統一管理，全站透過 `useAuth()` 取用：
+
+```
+AuthProvider
+  ├── isLoggedIn: boolean
+  ├── role: "her" | "him" | null
+  ├── isLoading: boolean
+  └── login() / logout()
+```
+
+JWT token 儲存於後端寫入的 `httpOnly Cookie`，前端不直接持有 token。
+
+### 3. 聊天狀態 — useState + localStorage
+
+AI 對話採用本地狀態管理，不經過 React Query：
+
+- `messages` / `isStreaming` — `useState` 管理目前對話畫面
+- `activeThreadId` — 以 `useRef` 在 SSE 非同步回呼中安全存取
+- **Session 歷史** — 透過 `lib/chatHistory.ts` 序列化存入 `localStorage`，支援多 session 切換
+
+### 4. 狀態層架構總覽
+
+```
+QueryClientProvider          ← TanStack Query 全域快取
+  └── AuthProvider           ← JWT 認證 Context
+        └── Page Components
+              ├── useCalendar / useFavorites   ← 伺服器狀態
+              ├── useAuth                      ← 認證狀態
+              └── useChat                      ← 本地 + localStorage
+```
+
+---
 
 ## 主要資料模型
 
