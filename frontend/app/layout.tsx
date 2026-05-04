@@ -36,6 +36,10 @@ const mochiy = Mochiy_Pop_One({
 export const metadata: Metadata = {
   title: "甜蜜食記 Sweet Food Diary",
   description: "美食紀錄與收藏 App，支援行事曆與對話助理。",
+  icons: {
+    icon: "/PICTURE-removebg-preview.png",
+    apple: "/PICTURE-removebg-preview.png",
+  },
 };
 
 export const viewport: Viewport = {
