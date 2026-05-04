@@ -21,7 +21,7 @@
 ### App Demo
 
 <p align="center">
-  <img src="frontend/public/APP使用畫面1.gif" alt="App Demo" width="360" style="border-radius:12px">
+  <img src="frontend/public/APP使用畫面1.gif" alt="App Demo" width="100%">
 </p>
 
 ### 登入畫面
@@ -267,8 +267,8 @@ flowchart TD
     A([使用者開啟 App]) --> B[Landing Page]
     B --> C[登入頁 · 選擇角色]
     C --> D{角色驗證}
-    D -->|her| E[/her/calendar]
-    D -->|him| F[/him/calendar]
+    D -->|her| E["/her/calendar"]
+    D -->|him| F["/him/calendar"]
 
     E --> G[📅 日曆管理]
     E --> H[🗺️ 地圖探索]
