@@ -1,0 +1,34 @@
+{
+  "name": "甜蜜食記 Sweet Food Diary",
+  "short_name": "甜蜜食記",
+  "description": "美食紀錄與收藏 App，支援行事曆與對話助理。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a1235",
+  "theme_color": "#bca2e6",
+  "lang": "zh-Hant",
+  "dir": "ltr",
+  "categories": ["food", "lifestyle", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
